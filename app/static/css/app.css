@@ -1,0 +1,81 @@
+:root {
+  --itsm-navy: #0f2744;
+  --itsm-accent: #1f6feb;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f4f6f9;
+  color: #1c2330;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0f2744, #1c4b8c);
+}
+
+.auth-card {
+  width: min(480px, calc(100% - 2rem));
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 240px;
+  background: var(--itsm-navy);
+  color: #fff;
+  padding: 1.5rem 1rem;
+}
+
+.sidebar .brand {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar a {
+  display: block;
+  color: #d7e3f4;
+  text-decoration: none;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+}
+
+.sidebar a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.content {
+  margin-left: 240px;
+  padding: 1.5rem 2rem 3rem;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
