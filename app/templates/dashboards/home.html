@@ -5,43 +5,63 @@
 {% block content %}
 <!-- Metric Cards -->
 <div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card shadow-sm border-start border-primary border-4">
-      <div class="card-body">
-        <div class="text-muted small text-uppercase fw-bold">Total Tickets</div>
-        <div class="fs-2 fw-bold text-primary">{{ total_tickets }}</div>
-        <div class="small text-muted">{% if current_user.role == 'employee' %}Submitted by you{% else %}System-wide{% endif %}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm border-start border-warning border-4">
-      <div class="card-body">
-        <div class="text-muted small text-uppercase fw-bold">Active / In Progress</div>
-        <div class="fs-2 fw-bold text-warning">{{ open_count }}</div>
-        <div class="small text-muted">Awaiting resolution</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm border-start border-danger border-4">
-      <div class="card-body">
-        <div class="text-muted small text-uppercase fw-bold">Critical Priority</div>
-        <div class="fs-2 fw-bold text-danger">{{ critical_count }}</div>
-        <div class="small text-muted">Active critical issues</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm border-start border-success border-4">
-      <div class="card-body">
-        <div class="text-muted small text-uppercase fw-bold">
-          {% if admin_data %}SLA Compliance{% else %}Resolved / Closed{% endif %}
+  <div class="col-xl-3 col-sm-6">
+    <div class="kpi-card kpi-card-total">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Total Incident Tickets</span>
+          <div class="kpi-value">{{ total_tickets }}</div>
+          <div class="text-muted small">{% if current_user.role == 'employee' %}Submitted by your account{% else %}All enterprise incidents{% endif %}</div>
         </div>
-        <div class="fs-2 fw-bold text-success">
-          {% if admin_data %}{{ admin_data.kpis.sla_compliance_rate }}%{% else %}{{ resolved_count }}{% endif %}
+        <div class="kpi-icon-badge bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-ticket-detailed-fill"></i>
         </div>
-        <div class="small text-muted">{% if admin_data %}Resolution compliance{% else %}Successfully handled{% endif %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="kpi-card kpi-card-active">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Active / In Progress</span>
+          <div class="kpi-value text-warning">{{ open_count }}</div>
+          <div class="text-muted small">Awaiting resolution / assignment</div>
+        </div>
+        <div class="kpi-icon-badge bg-warning bg-opacity-10 text-warning">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="kpi-card kpi-card-critical">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Critical Priority</span>
+          <div class="kpi-value text-danger">{{ critical_count }}</div>
+          <div class="text-muted small">Requires immediate escalation</div>
+        </div>
+        <div class="kpi-icon-badge bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-exclamation-octagon-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="kpi-card kpi-card-sla">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+            {% if admin_data %}SLA Compliance Rate{% else %}Resolved Tickets{% endif %}
+          </span>
+          <div class="kpi-value text-success font-mono">
+            {% if admin_data %}{{ admin_data.kpis.sla_compliance_rate }}%{% else %}{{ resolved_count }}{% endif %}
+          </div>
+          <div class="text-muted small">{% if admin_data %}On-time SLA target closure{% else %}Successfully resolved issues{% endif %}</div>
+        </div>
+        <div class="kpi-icon-badge bg-success bg-opacity-10 text-success">
+          <i class="bi bi-shield-check"></i>
+        </div>
       </div>
     </div>
   </div>
@@ -52,8 +72,9 @@
   <div class="row g-3 mb-4">
     <div class="col-lg-8">
       <div class="card shadow-sm h-100">
-        <div class="card-header bg-white py-3">
-          <h6 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>7-Day Ticket Activity Trends</h6>
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h6 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-graph-up me-2 text-primary"></i>7-Day Ticket Activity Velocity</h6>
+          <span class="badge bg-light text-secondary border">Real-Time</span>
         </div>
         <div class="card-body">
           <canvas id="trendChart" height="120"></canvas>
@@ -63,9 +84,9 @@
     <div class="col-lg-4">
       <div class="card shadow-sm h-100">
         <div class="card-header bg-white py-3">
-          <h6 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Ticket Category Distribution</h6>
+          <h6 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Category Distribution</h6>
         </div>
-        <div class="card-body d-flex align-items-center justify-content-center">
+        <div class="card-body d-flex align-items-center justify-content-center p-3">
           <canvas id="categoryChart" style="max-height: 240px;"></canvas>
         </div>
       </div>
@@ -76,7 +97,7 @@
     <div class="col-lg-6">
       <div class="card shadow-sm h-100">
         <div class="card-header bg-white py-3">
-          <h6 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Tickets by Priority Level</h6>
+          <h6 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Tickets by Priority Level</h6>
         </div>
         <div class="card-body">
           <canvas id="priorityChart" height="140"></canvas>
@@ -86,7 +107,7 @@
     <div class="col-lg-6">
       <div class="card shadow-sm h-100">
         <div class="card-header bg-white py-3">
-          <h6 class="card-title mb-0"><i class="bi bi-person-lines-fill me-2"></i>Technician Workload vs Capacity</h6>
+          <h6 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Technician Workload vs Capacity</h6>
         </div>
         <div class="card-body">
           <canvas id="workloadChart" height="140"></canvas>
@@ -97,15 +118,15 @@
 
   <!-- Incident Analysis & Recurring Problems Section -->
   {% if incident_data and incident_data.recurring_patterns %}
-    <div class="card shadow-sm mb-4 border-warning">
+    <div class="card shadow-sm mb-4 border-warning border-opacity-50">
       <div class="card-header bg-warning bg-opacity-10 py-3 d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0 text-dark"><i class="bi bi-lightbulb me-2 text-warning"></i>Incident Analysis: Recurring Issues</h5>
-        <span class="badge bg-warning text-dark">{{ incident_data.recurring_patterns|length }} Patterns Detected</span>
+        <h5 class="card-title mb-0 text-dark fw-bold"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Incident Analysis: Recurring Problem Detection</h5>
+        <span class="badge bg-warning text-dark">{{ incident_data.recurring_patterns|length }} Clusters Detected</span>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th>Keyword Cluster</th>
                 <th>Frequency</th>
@@ -117,13 +138,13 @@
             <tbody>
               {% for p in incident_data.recurring_patterns %}
                 <tr>
-                  <td><span class="badge bg-dark fs-6">{{ p.keyword }}</span></td>
-                  <td class="fw-bold text-danger">{{ p.frequency }} tickets</td>
-                  <td><span class="badge bg-light text-dark border">{{ p.primary_category }}</span></td>
-                  <td class="small">{{ p.hypothesis }}</td>
+                  <td><span class="badge bg-dark font-mono">{{ p.keyword }}</span></td>
+                  <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle fw-bold">{{ p.frequency }} tickets</span></td>
+                  <td><span class="badge bg-light text-secondary border">{{ p.primary_category }}</span></td>
+                  <td class="small text-secondary">{{ p.hypothesis }}</td>
                   <td class="small">
                     {% for t in p.sample_tickets %}
-                      <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="badge bg-light text-primary border text-decoration-none">
+                      <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="badge bg-light text-primary border text-decoration-none font-mono">
                         {{ t.ticket_number }}
                       </a>
                     {% endfor %}
@@ -140,55 +161,63 @@
   <!-- Technician Performance Analytics Table -->
   {% if tech_performance %}
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Technician Performance Analytics</h5>
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-people-fill me-2 text-primary"></i>Technician Performance Scorecard</h5>
+        <span class="badge bg-light text-secondary border">{{ tech_performance|length }} Active Technicians</span>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th>Technician</th>
                 <th>Status</th>
                 <th>Certified Skills</th>
                 <th>Total Assigned</th>
-                <th>Active Tickets</th>
+                <th>Active / Max</th>
                 <th>Resolved</th>
-                <th>Avg Resolution Time</th>
+                <th>Avg Resolution</th>
                 <th>SLA Compliance</th>
               </tr>
             </thead>
             <tbody>
               {% for tp in tech_performance %}
                 <tr>
-                  <td class="fw-semibold">{{ tp.name }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="avatar-chip" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                        {{ tp.name[0] if tp.name else 'T' }}
+                      </div>
+                      <span class="fw-semibold text-dark">{{ tp.name }}</span>
+                    </div>
+                  </td>
                   <td>
                     {% if tp.availability_status == 'available' %}
-                      <span class="badge bg-success">Available</span>
+                      <span class="badge-soft badge-resolved"><i class="bi bi-dot fs-6"></i>Available</span>
                     {% elif tp.availability_status == 'busy' %}
-                      <span class="badge bg-warning text-dark">Busy</span>
+                      <span class="badge-soft badge-pending"><i class="bi bi-hourglass-split"></i>Busy</span>
                     {% else %}
-                      <span class="badge bg-secondary">Unavailable</span>
+                      <span class="badge-soft badge-low">Unavailable</span>
                     {% endif %}
                   </td>
                   <td>
                     {% for s in tp.skills %}
-                      <span class="badge bg-light text-dark border">{{ s }}</span>
+                      <span class="badge bg-light text-secondary border me-1" style="font-size: 0.75rem;">{{ s }}</span>
                     {% else %}
                       <span class="text-muted small">General IT</span>
                     {% endfor %}
                   </td>
-                  <td>{{ tp.total_assigned }}</td>
-                  <td>{{ tp.active_tickets }} / {{ tp.max_concurrent_tickets }}</td>
-                  <td class="text-success fw-bold">{{ tp.resolved_tickets }}</td>
-                  <td>{{ tp.avg_resolution_hours }} hrs</td>
-                  <td>
+                  <td class="font-mono">{{ tp.total_assigned }}</td>
+                  <td class="font-mono">{{ tp.active_tickets }} / {{ tp.max_concurrent_tickets }}</td>
+                  <td class="text-success fw-bold font-mono">{{ tp.resolved_tickets }}</td>
+                  <td class="font-mono">{{ tp.avg_resolution_hours }}h</td>
+                  <td style="min-width: 140px;">
                     <div class="d-flex align-items-center gap-2">
-                      <div class="progress flex-grow-1" style="height: 6px;">
+                      <div class="progress flex-grow-1" style="height: 7px; border-radius: 999px;">
                         <div class="progress-bar {% if tp.sla_compliance_rate >= 90 %}bg-success{% elif tp.sla_compliance_rate >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
                              role="progressbar" style="width: {{ tp.sla_compliance_rate }}%;"></div>
                       </div>
-                      <span class="small fw-bold">{{ tp.sla_compliance_rate }}%</span>
+                      <span class="small fw-bold font-mono">{{ tp.sla_compliance_rate }}%</span>
                     </div>
                   </td>
                 </tr>
@@ -204,13 +233,15 @@
 <!-- Recent Tickets Section -->
 <div class="card shadow-sm">
   <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0"><i class="bi bi-clock me-2"></i>Recent Tickets</h5>
-    <a href="{{ url_for('web_tickets.list_tickets') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Incident Tickets</h5>
+    <a href="{{ url_for('web_tickets.list_tickets') }}" class="btn btn-sm btn-outline-primary px-3">
+      View All Tickets<i class="bi bi-arrow-right ms-1"></i>
+    </a>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+        <thead>
           <tr>
             <th>Ticket #</th>
             <th>Title</th>
@@ -225,38 +256,53 @@
           {% if recent_tickets %}
             {% for t in recent_tickets %}
               <tr>
-                <td class="fw-semibold">
-                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="text-decoration-none">
+                <td>
+                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="fw-bold text-primary text-decoration-none font-mono">
                     {{ t.ticket_number }}
                   </a>
                 </td>
                 <td>
-                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="text-dark text-decoration-none">
+                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="fw-semibold text-dark text-decoration-none d-block text-truncate" style="max-width: 280px;">
                     {{ t.title }}
                   </a>
                 </td>
-                <td><span class="badge bg-light text-dark border">{{ t.category }}</span></td>
+                <td><span class="badge bg-light text-secondary border fw-medium">{{ t.category }}</span></td>
                 <td>
                   {% if t.final_priority == 'Critical' %}
-                    <span class="badge bg-danger">Critical</span>
+                    <span class="badge-soft badge-critical"><i class="bi bi-fire"></i>Critical</span>
                   {% elif t.final_priority == 'High' %}
-                    <span class="badge bg-warning text-dark">High</span>
+                    <span class="badge-soft badge-high"><i class="bi bi-exclamation-triangle"></i>High</span>
                   {% elif t.final_priority == 'Medium' %}
-                    <span class="badge bg-info text-dark">Medium</span>
+                    <span class="badge-soft badge-medium"><i class="bi bi-dash-circle"></i>Medium</span>
                   {% else %}
-                    <span class="badge bg-secondary">Low</span>
+                    <span class="badge-soft badge-low"><i class="bi bi-arrow-down-circle"></i>Low</span>
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge bg-primary">{{ t.status }}</span>
+                  {% if t.status == 'Open' %}
+                    <span class="badge-soft badge-open"><i class="bi bi-dot fs-6"></i>Open</span>
+                  {% elif t.status == 'Assigned' %}
+                    <span class="badge-soft badge-open"><i class="bi bi-person-check"></i>Assigned</span>
+                  {% elif t.status == 'In Progress' %}
+                    <span class="badge-soft badge-in-progress"><i class="bi bi-arrow-repeat"></i>In Progress</span>
+                  {% elif t.status in ('Pending', 'On Hold') %}
+                    <span class="badge-soft badge-pending"><i class="bi bi-pause-circle"></i>{{ t.status }}</span>
+                  {% elif t.status == 'Resolved' %}
+                    <span class="badge-soft badge-resolved"><i class="bi bi-check2-circle"></i>Resolved</span>
+                  {% elif t.status == 'Closed' %}
+                    <span class="badge-soft badge-closed"><i class="bi bi-archive"></i>Closed</span>
+                  {% else %}
+                    <span class="badge-soft badge-low">{{ t.status }}</span>
+                  {% endif %}
                 </td>
-                <td class="small">{{ t.sla_deadline.strftime('%Y-%m-%d %H:%M') if t.sla_deadline else '-' }}</td>
-                <td class="small text-muted">{{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '-' }}</td>
+                <td class="small font-mono">{{ t.sla_deadline.strftime('%b %d, %H:%M') if t.sla_deadline else '-' }}</td>
+                <td class="small text-muted font-mono">{{ t.created_at.strftime('%b %d, %H:%M') if t.created_at else '-' }}</td>
               </tr>
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="7" class="text-center py-4 text-muted">
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                 No tickets reported yet. Click "New Ticket" to create one!
               </td>
             </tr>
@@ -280,27 +326,39 @@
       labels: {{ admin_data.charts.trends.labels|tojson }},
       datasets: [
         {
-          label: 'Tickets Created',
+          label: 'Incidents Created',
           data: {{ admin_data.charts.trends.created|tojson }},
-          borderColor: '#0d6efd',
-          backgroundColor: 'rgba(13, 110, 253, 0.1)',
-          tension: 0.3,
-          fill: true
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79, 70, 229, 0.12)',
+          tension: 0.38,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
         },
         {
-          label: 'Tickets Resolved',
+          label: 'Incidents Resolved',
           data: {{ admin_data.charts.trends.resolved|tojson }},
-          borderColor: '#198754',
-          backgroundColor: 'rgba(25, 135, 84, 0.1)',
-          tension: 0.3,
-          fill: true
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.10)',
+          tension: 0.38,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
         }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'top' } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      plugins: { 
+        legend: { 
+          position: 'top',
+          labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } }
+        } 
+      },
+      scales: { 
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
     }
   });
 
@@ -312,13 +370,21 @@
       labels: {{ admin_data.charts.categories.labels|tojson }},
       datasets: [{
         data: {{ admin_data.charts.categories.data|tojson }},
-        backgroundColor: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#fd7e14', '#6c757d']
+        backgroundColor: ['#4f46e5', '#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b', '#64748b'],
+        borderWidth: 2,
+        borderColor: '#ffffff'
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } }
+      plugins: { 
+        legend: { 
+          position: 'bottom',
+          labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' } }
+        } 
+      },
+      cutout: '68%'
     }
   });
 
@@ -331,13 +397,17 @@
       datasets: [{
         label: 'Tickets Count',
         data: {{ admin_data.charts.priorities.data|tojson }},
-        backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0', '#6c757d']
+        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#64748b'],
+        borderRadius: 8
       }]
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      scales: { 
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
     }
   });
 
@@ -351,18 +421,23 @@
         {
           label: 'Active Tickets',
           data: {{ admin_data.charts.workloads.active|tojson }},
-          backgroundColor: '#0d6efd'
+          backgroundColor: '#4f46e5',
+          borderRadius: 8
         },
         {
           label: 'Max Concurrent Capacity',
           data: {{ admin_data.charts.workloads.capacity|tojson }},
-          backgroundColor: '#e9ecef'
+          backgroundColor: '#e2e8f0',
+          borderRadius: 8
         }
       ]
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      scales: { 
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
     }
   });
 </script>

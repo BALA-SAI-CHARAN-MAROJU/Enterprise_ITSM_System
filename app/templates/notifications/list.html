@@ -1,41 +1,57 @@
 {% extends "base.html" %}
 {% block title %}Notifications · Enterprise ITSM{% endblock %}
-{% block heading %}Notifications{% endblock %}
+{% block heading %}Notification Center{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm">
+<div class="card border-0 shadow-sm">
   <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0"><i class="bi bi-bell me-2"></i>Recent Notifications</h5>
-    <form method="post" action="{{ url_for('web_notifications.read_all') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-sm btn-outline-secondary">Mark All as Read</button>
-    </form>
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="card-title fw-bold text-dark mb-0"><i class="bi bi-bell-fill me-2 text-primary"></i>Activity Alerts</h5>
+      <span class="badge bg-light text-secondary border">{{ notifications|length }} notifications</span>
+    </div>
+    {% if notifications %}
+      <form method="post" action="{{ url_for('web_notifications.read_all') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-check2-all me-1"></i>Mark All Read
+        </button>
+      </form>
+    {% endif %}
   </div>
   <div class="card-body p-0">
     <div class="list-group list-group-flush">
       {% if notifications %}
         {% for n in notifications %}
-          <div class="list-group-item p-3 {% if not n.is_read %}bg-light border-start border-primary border-4{% endif %}">
+          <div class="list-group-item p-3.5 {% if not n.is_read %}bg-primary bg-opacity-10 border-start border-primary border-4{% endif %} transition-all">
             <div class="d-flex justify-content-between align-items-start mb-1">
-              <div>
-                <span class="fw-semibold {% if not n.is_read %}text-primary{% endif %}">{{ n.title }}</span>
-                {% if not n.is_read %}
-                  <span class="badge bg-primary ms-1">New</span>
-                {% endif %}
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-chip {% if not n.is_read %}bg-primary{% else %}bg-secondary bg-opacity-50{% endif %}" style="width: 32px; height: 32px;">
+                  <i class="bi {% if 'breach' in n.title.lower() or 'sla' in n.title.lower() %}bi-exclamation-triangle{% elif 'assign' in n.title.lower() %}bi-person-check{% elif 'resolved' in n.title.lower() %}bi-check2-circle{% else %}bi-bell{% endif %} text-white fs-6"></i>
+                </div>
+                <div>
+                  <span class="fw-bold {% if not n.is_read %}text-dark{% else %}text-secondary{% endif %}">{{ n.title }}</span>
+                  {% if not n.is_read %}
+                    <span class="badge bg-primary ms-1" style="font-size: 0.65rem;">New</span>
+                  {% endif %}
+                </div>
               </div>
-              <span class="text-muted small">{{ n.created_at.strftime('%b %d, %H:%M') if n.created_at else '' }}</span>
+              <span class="text-muted small font-mono" style="font-size: 0.78rem;">{{ n.created_at.strftime('%b %d, %H:%M') if n.created_at else '' }}</span>
             </div>
-            <div class="text-muted small mb-2">{{ n.body }}</div>
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="text-secondary small mb-2 ms-5" style="line-height: 1.5;">{{ n.body }}</div>
+            <div class="d-flex justify-content-between align-items-center ms-5">
               <div>
                 {% if n.ticket_id %}
-                  <a href="{{ url_for('web_tickets.detail', ticket_id=n.ticket_id) }}" class="btn btn-sm btn-outline-primary py-0">View Ticket</a>
+                  <a href="{{ url_for('web_tickets.detail', ticket_id=n.ticket_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.78rem;">
+                    <i class="bi bi-arrow-up-right me-1"></i>View Incident Ticket
+                  </a>
                 {% endif %}
               </div>
               {% if not n.is_read %}
                 <form method="post" action="{{ url_for('web_notifications.mark_read', notif_id=n.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-sm btn-link text-decoration-none text-muted py-0">Mark read</button>
+                  <button type="submit" class="btn btn-sm btn-link text-decoration-none text-muted py-0 small">
+                    <i class="bi bi-check me-1"></i>Mark read
+                  </button>
                 </form>
               {% endif %}
             </div>
@@ -43,8 +59,9 @@
         {% endfor %}
       {% else %}
         <div class="text-center py-5 text-muted">
-          <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
-          No notifications yet.
+          <i class="bi bi-bell-slash fs-1 d-block mb-3 text-secondary opacity-50"></i>
+          <div class="fw-semibold">No notifications right now</div>
+          <div class="small text-muted">You're all caught up on system updates and SLA alerts.</div>
         </div>
       {% endif %}
     </div>

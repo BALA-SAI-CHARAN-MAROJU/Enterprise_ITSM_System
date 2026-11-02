@@ -1,10 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Enterprise ITSM{% endblock %}
+{% block title %}Welcome · Enterprise ITSM Portal{% endblock %}
 {% block public %}
-<div class="auth-card">
-  <h1 class="h3 mb-2">Enterprise IT Service Management</h1>
-  <p class="text-muted">Raise tickets, track SLAs, and coordinate technician work from one portal.</p>
-  <a class="btn btn-primary me-2" href="{{ url_for('web_auth.login') }}">Sign in</a>
-  <a class="btn btn-outline-primary" href="{{ url_for('web_auth.register') }}">Create an employee account</a>
+<div class="auth-card text-center">
+  <div class="auth-brand-badge mx-auto">
+    <i class="bi bi-shield-lock-fill"></i>
+  </div>
+  <h2 class="h3 fw-bold text-dark mb-2">Enterprise ITSM</h2>
+  <p class="text-muted small mb-4">
+    Next-generation IT Service Delivery with Intelligent Priority Scoring, SLA Guardrails, and Automated Resource Allocation.
+  </p>
+  <div class="d-grid gap-2 mb-4">
+    <a class="btn btn-primary btn-lg fs-6 py-2" href="{{ url_for('web_auth.login') }}">
+      <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to Portal
+    </a>
+    <a class="btn btn-outline-secondary btn-lg fs-6 py-2" href="{{ url_for('web_auth.register') }}">
+      <i class="bi bi-person-plus me-2"></i>Register Employee Account
+    </a>
+  </div>
+  <div class="border-top pt-3 text-muted small">
+    Enterprise Platform · Built for IT Support & Service Delivery
+  </div>
 </div>
 {% endblock %}

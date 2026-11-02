@@ -1,130 +1,183 @@
 {% extends "base.html" %}
 {% block title %}{{ ticket.ticket_number }} · Enterprise ITSM{% endblock %}
-{% block heading %}Ticket: {{ ticket.ticket_number }}{% endblock %}
+{% block heading %}Ticket {{ ticket.ticket_number }}{% endblock %}
 
 {% block content %}
-<div class="row">
+<!-- Top SLA Banner -->
+{% if ticket.sla_breached %}
+  <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center justify-content-between p-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="kpi-icon-badge bg-danger text-white" style="width: 40px; height: 40px; font-size: 1.2rem;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div>
+        <h6 class="fw-bold mb-0 text-danger">SLA Target Breached</h6>
+        <div class="small">The resolution target for this incident has passed. Escalation notification has been triggered.</div>
+      </div>
+    </div>
+    <span class="badge bg-danger px-3 py-2 text-uppercase">Overdue</span>
+  </div>
+{% elif ticket.status in ('Resolved', 'Closed') %}
+  <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-3 p-3">
+    <div class="kpi-icon-badge bg-success text-white" style="width: 40px; height: 40px; font-size: 1.2rem;">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+    <div>
+      <h6 class="fw-bold mb-0 text-success">Incident Successfully Resolved</h6>
+      <div class="small text-muted">This ticket is closed and archived under enterprise service records.</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-4">
   <!-- Left column: Ticket Info, Comments, and History -->
   <div class="col-lg-8">
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <div>
-          <h4 class="card-title mb-1">{{ ticket.title }}</h4>
-          <span class="badge bg-light text-dark border me-1">{{ ticket.category }}</span>
+    <!-- Ticket Primary Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-secondary border fw-medium px-2 py-1">{{ ticket.category }}</span>
           <span class="text-muted small">Opened on {{ ticket.created_at.strftime('%b %d, %Y at %H:%M') if ticket.created_at else '-' }}</span>
         </div>
         <div>
           {% if ticket.status == 'Open' %}
-            <span class="badge bg-primary fs-6">Open</span>
+            <span class="badge-soft badge-open"><i class="bi bi-dot fs-6"></i>Open</span>
           {% elif ticket.status == 'Assigned' %}
-            <span class="badge bg-info text-dark fs-6">Assigned</span>
+            <span class="badge-soft badge-open"><i class="bi bi-person-check"></i>Assigned</span>
           {% elif ticket.status == 'In Progress' %}
-            <span class="badge bg-primary fs-6">In Progress</span>
+            <span class="badge-soft badge-in-progress"><i class="bi bi-arrow-repeat"></i>In Progress</span>
           {% elif ticket.status in ('Pending', 'On Hold') %}
-            <span class="badge bg-warning text-dark fs-6">{{ ticket.status }}</span>
+            <span class="badge-soft badge-pending"><i class="bi bi-pause-circle"></i>{{ ticket.status }}</span>
           {% elif ticket.status == 'Resolved' %}
-            <span class="badge bg-success fs-6">Resolved</span>
+            <span class="badge-soft badge-resolved"><i class="bi bi-check2-circle"></i>Resolved</span>
           {% elif ticket.status == 'Closed' %}
-            <span class="badge bg-dark fs-6">Closed</span>
+            <span class="badge-soft badge-closed"><i class="bi bi-archive"></i>Closed</span>
           {% endif %}
         </div>
       </div>
-      <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-bold">Description</h6>
-        <div class="p-3 bg-light rounded border mb-3" style="white-space: pre-wrap;">{{ ticket.description }}</div>
+      <div class="card-body p-4">
+        <h4 class="fw-bold text-dark mb-3">{{ ticket.title }}</h4>
 
-        <div class="row g-2 text-muted small">
+        <div class="p-3 bg-light rounded-3 border mb-4" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">{{ ticket.description }}</div>
+
+        <div class="row g-3 p-3 rounded-3 bg-white border">
           <div class="col-sm-6">
-            <i class="bi bi-person me-1"></i>Requester: <strong>{{ ticket.requester.full_name }}</strong> ({{ ticket.requester.email }})
+            <span class="text-muted small d-block">Requester</span>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <div class="avatar-chip" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                {{ ticket.requester.first_name[0] if (ticket.requester and ticket.requester.first_name) else 'U' }}
+              </div>
+              <div>
+                <strong class="text-dark">{{ ticket.requester.full_name }}</strong>
+                <span class="text-muted small d-block" style="font-size: 0.75rem;">{{ ticket.requester.email }}</span>
+              </div>
+            </div>
           </div>
           <div class="col-sm-6">
-            <i class="bi bi-people me-1"></i>Affected Users: <strong>{{ ticket.affected_users_count }}</strong>
+            <span class="text-muted small d-block">Assigned Technician</span>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              {% if ticket.assigned_technician and ticket.assigned_technician.user %}
+                <div class="avatar-chip bg-secondary bg-opacity-75" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                  {{ ticket.assigned_technician.user.first_name[0] if ticket.assigned_technician.user.first_name else 'T' }}
+                </div>
+                <div>
+                  <strong class="text-primary">{{ ticket.assigned_technician.user.full_name }}</strong>
+                  <span class="text-muted small d-block" style="font-size: 0.75rem;">{{ ticket.assigned_technician.user.email }}</span>
+                </div>
+              {% else %}
+                <span class="text-muted fst-italic">Unassigned</span>
+              {% endif %}
+            </div>
           </div>
-          <div class="col-sm-6">
-            <i class="bi bi-graph-up me-1"></i>Business Impact: <strong class="text-capitalize">{{ ticket.business_impact }}</strong>
+          <div class="col-sm-4">
+            <span class="text-muted small d-block">Business Impact</span>
+            <strong class="text-dark text-capitalize">{{ ticket.business_impact }}</strong>
           </div>
-          <div class="col-sm-6">
-            <i class="bi bi-hourglass-split me-1"></i>Urgency: <strong class="text-capitalize">{{ ticket.urgency }}</strong>
+          <div class="col-sm-4">
+            <span class="text-muted small d-block">Urgency</span>
+            <strong class="text-dark text-capitalize">{{ ticket.urgency }}</strong>
           </div>
-          <div class="col-sm-6">
-            <i class="bi bi-person-badge me-1"></i>Assigned Technician: 
-            <strong>{{ ticket.assigned_technician.user.full_name if ticket.assigned_technician and ticket.assigned_technician.user else 'Unassigned' }}</strong>
-          </div>
-          <div class="col-sm-6">
-            <i class="bi bi-building me-1"></i>Department: 
-            <strong>{{ ticket.department.name if ticket.department else 'General IT' }}</strong>
+          <div class="col-sm-4">
+            <span class="text-muted small d-block">Affected Users</span>
+            <strong class="text-dark">{{ ticket.affected_users_count }} user(s)</strong>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Comments & Updates -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="card-title mb-0"><i class="bi bi-chat-left-dots me-2"></i>Activity & Comments</h5>
+    <!-- Comments & Updates Thread -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h5 class="card-title fw-bold text-dark mb-0"><i class="bi bi-chat-left-text me-2 text-primary"></i>Activity & Comments</h5>
       </div>
-      <div class="card-body">
+      <div class="card-body p-4">
         {% if ticket.comments %}
           <div class="vstack gap-3 mb-4">
             {% for c in ticket.comments %}
-              <div class="p-3 rounded border {% if c.author.role == 'technician' or c.author.role == 'admin' %}bg-light border-primary-subtle{% else %}bg-white{% endif %}">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <div>
-                    <span class="fw-semibold">{{ c.author.full_name if c.author else 'System' }}</span>
-                    <span class="badge bg-secondary-subtle text-dark border ms-1 small">{{ c.author.role if c.author else 'system' }}</span>
+              <div class="p-3 rounded-3 border {% if c.author.role in ('technician', 'admin') %}bg-light border-primary-subtle{% else %}bg-white border-light-subtle shadow-sm{% endif %}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-chip" style="width: 26px; height: 26px; font-size: 0.72rem;">
+                      {{ c.author.first_name[0] if (c.author and c.author.first_name) else 'S' }}
+                    </div>
+                    <span class="fw-bold text-dark">{{ c.author.full_name if c.author else 'System' }}</span>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border small" style="font-size: 0.65rem;">{{ c.author.role if c.author else 'system' }}</span>
                   </div>
                   <span class="text-muted small">{{ c.created_at.strftime('%b %d, %H:%M') if c.created_at else '' }}</span>
                 </div>
-                <div class="text-break" style="white-space: pre-wrap;">{{ c.body }}</div>
+                <div class="text-break text-secondary" style="white-space: pre-wrap; font-size: 0.92rem; padding-left: 2rem;">{{ c.body }}</div>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <p class="text-muted small mb-4">No comments posted yet.</p>
+          <div class="text-center py-4 text-muted small">
+            <i class="bi bi-chat-dots fs-3 d-block mb-1 opacity-50"></i>
+            No comments posted yet.
+          </div>
         {% endif %}
 
         <!-- Add Comment Form -->
         <form method="post" action="{{ url_for('web_tickets.post_comment', ticket_id=ticket.id) }}">
           {{ comment_form.hidden_tag() }}
           <div class="mb-3">
-            {{ comment_form.body(class="form-control", rows=3, placeholder="Write a comment or resolution note...") }}
+            {{ comment_form.body(class="form-control", rows=3, placeholder="Write a comment or resolution update...") }}
             {% for error in comment_form.body.errors %}
-              <div class="text-danger small">{{ error }}</div>
+              <div class="text-danger small mt-1">{{ error }}</div>
             {% endfor %}
           </div>
           <div class="text-end">
-            {{ comment_form.submit(class="btn btn-primary btn-sm") }}
+            {{ comment_form.submit(class="btn btn-primary btn-sm px-4 shadow-sm") }}
           </div>
         </form>
       </div>
     </div>
 
     <!-- Audit History Trail -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Audit History</h5>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h5 class="card-title fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Audit Trail</h5>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-sm table-striped mb-0 small">
-            <thead class="table-light">
+          <table class="table table-sm table-hover mb-0 small">
+            <thead>
               <tr>
-                <th>Time</th>
-                <th>Actor</th>
+                <th>Timestamp</th>
+                <th>User</th>
                 <th>Action</th>
-                <th>Details</th>
+                <th>Change Details</th>
               </tr>
             </thead>
             <tbody>
               {% for h in ticket.history %}
                 <tr>
-                  <td class="text-muted text-nowrap">{{ h.created_at.strftime('%Y-%m-%d %H:%M') if h.created_at else '-' }}</td>
-                  <td>{{ h.user.full_name if h.user else 'System' }}</td>
-                  <td><span class="badge bg-secondary">{{ h.action }}</span></td>
+                  <td class="text-muted text-nowrap font-mono">{{ h.created_at.strftime('%Y-%m-%d %H:%M') if h.created_at else '-' }}</td>
+                  <td class="fw-medium text-dark">{{ h.user.full_name if h.user else 'System Engine' }}</td>
+                  <td><span class="badge bg-light text-secondary border">{{ h.action }}</span></td>
                   <td>
-                    {% if h.field_name %}<strong>{{ h.field_name }}:</strong>{% endif %}
+                    {% if h.field_name %}<span class="text-muted">{{ h.field_name }}:</span>{% endif %}
                     {% if h.old_value %}<span class="text-muted">{{ h.old_value }} &rarr;</span>{% endif %}
-                    <span class="fw-semibold">{{ h.new_value }}</span>
+                    <span class="fw-semibold text-dark">{{ h.new_value }}</span>
                   </td>
                 </tr>
               {% endfor %}
@@ -138,14 +191,14 @@
   <!-- Right column: Controls, Priority, SLA, and Technician Recommendation -->
   <div class="col-lg-4">
     <!-- Status Action Box -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h6 class="card-title mb-0"><i class="bi bi-gear me-2"></i>Ticket Actions</h6>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h6 class="card-title fw-bold text-dark mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Status Controls</h6>
       </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <div class="small text-muted mb-1">Current Status</div>
-          <div class="fw-bold fs-5">{{ ticket.status }}</div>
+      <div class="card-body p-3">
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Current State:</span>
+          <span class="fw-bold">{{ ticket.status }}</span>
         </div>
 
         {% if allowed_statuses %}
@@ -157,12 +210,12 @@
             </div>
             <div class="mb-3">
               {{ status_form.note.label(class="form-label small fw-semibold") }}
-              {{ status_form.note(class="form-control form-control-sm", placeholder="Optional explanation") }}
+              {{ status_form.note(class="form-control form-control-sm", placeholder="Optional transition note") }}
             </div>
             {{ status_form.submit(class="btn btn-outline-primary btn-sm w-100") }}
           </form>
         {% else %}
-          <div class="alert alert-light border small text-muted mb-0">
+          <div class="alert alert-light border small text-muted mb-0 py-2">
             No further status transitions available for your role.
           </div>
         {% endif %}
@@ -171,19 +224,19 @@
 
     <!-- Technician Assignment & Recommendation Box (Admin only) -->
     {% if current_user.is_admin() and assign_form %}
-      <div class="card shadow-sm border-primary mb-4">
+      <div class="card border-primary border-opacity-50 shadow-sm mb-4">
         <div class="card-header bg-primary text-white py-3">
-          <h6 class="card-title mb-0"><i class="bi bi-person-check me-2"></i>Automated Technician Assignment</h6>
+          <h6 class="card-title mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Technician Recommendation</h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-3">
           {% if recommendation %}
-            <div class="p-2 bg-light rounded border mb-3 small">
-              <div class="fw-bold text-dark mb-1">Intelligent Recommendation:</div>
+            <div class="p-3 bg-light rounded-3 border mb-3 small">
+              <div class="fw-bold text-dark mb-1">Recommendation Engine:</div>
               {% if recommendation.recommended_technician_name %}
-                <div class="text-primary fw-semibold fs-6 mb-1">
-                  <i class="bi bi-award me-1"></i>{{ recommendation.recommended_technician_name }}
+                <div class="text-primary fw-bold fs-6 mb-1">
+                  <i class="bi bi-award-fill me-1"></i>{{ recommendation.recommended_technician_name }}
                 </div>
-                <div class="text-muted">{{ recommendation.justification }}</div>
+                <div class="text-muted" style="font-size: 0.8rem; line-height: 1.4;">{{ recommendation.justification }}</div>
               {% else %}
                 <div class="text-warning fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>{{ recommendation.justification }}</div>
               {% endif %}
@@ -198,42 +251,42 @@
             </div>
             <div class="mb-3">
               {{ assign_form.override_reason.label(class="form-label small fw-semibold") }}
-              {{ assign_form.override_reason(class="form-control form-control-sm", placeholder="Provide reason if overriding recommendation") }}
+              {{ assign_form.override_reason(class="form-control form-control-sm", placeholder="Reason if overriding recommendation") }}
             </div>
-            {{ assign_form.submit(class="btn btn-primary btn-sm w-100") }}
+            {{ assign_form.submit(class="btn btn-primary btn-sm w-100 shadow-sm") }}
           </form>
         </div>
       </div>
     {% endif %}
 
     <!-- Priority Breakdown Box -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h6 class="card-title mb-0"><i class="bi bi-shield-check me-2"></i>Priority Analysis</h6>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h6 class="card-title fw-bold text-dark mb-0"><i class="bi bi-shield-check me-2 text-primary"></i>Priority Analysis</h6>
       </div>
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="small text-muted">Final Priority:</span>
           {% if ticket.final_priority == 'Critical' %}
-            <span class="badge bg-danger fs-6">Critical</span>
+            <span class="badge-soft badge-critical"><i class="bi bi-fire"></i>Critical</span>
           {% elif ticket.final_priority == 'High' %}
-            <span class="badge bg-warning text-dark fs-6">High</span>
+            <span class="badge-soft badge-high"><i class="bi bi-exclamation-triangle"></i>High</span>
           {% elif ticket.final_priority == 'Medium' %}
-            <span class="badge bg-info text-dark fs-6">Medium</span>
+            <span class="badge-soft badge-medium"><i class="bi bi-dash-circle"></i>Medium</span>
           {% else %}
-            <span class="badge bg-secondary fs-6">Low</span>
+            <span class="badge-soft badge-low"><i class="bi bi-arrow-down-circle"></i>Low</span>
           {% endif %}
         </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <span class="small text-muted">Engine Recommended:</span>
           <span class="badge bg-light text-dark border">{{ ticket.recommended_priority }}</span>
         </div>
-        <hr>
-        <div class="small text-muted">
-          <div class="fw-semibold text-dark mb-1">Priority Engine Justification:</div>
+        <hr class="my-2 border-light">
+        <div class="small">
+          <div class="fw-semibold text-dark mb-1" style="font-size: 0.8rem;">Engine Justification Log:</div>
           {% for h in ticket.history %}
             {% if h.action == 'priority_evaluated' and h.old_value %}
-              <div class="p-2 bg-light rounded border text-muted small mb-2" style="white-space: pre-wrap;">{{ h.old_value }}</div>
+              <div class="p-2 bg-light rounded border text-muted small" style="white-space: pre-wrap; font-size: 0.75rem;">{{ h.old_value }}</div>
             {% endif %}
           {% endfor %}
         </div>
@@ -241,25 +294,25 @@
     </div>
 
     <!-- SLA Monitoring Box -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h6 class="card-title mb-0"><i class="bi bi-stopwatch me-2"></i>SLA Target</h6>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h6 class="card-title fw-bold text-dark mb-0"><i class="bi bi-stopwatch me-2 text-primary"></i>SLA Compliance Target</h6>
       </div>
-      <div class="card-body">
+      <div class="card-body p-3">
         <div class="mb-2">
           <div class="small text-muted">Resolution Deadline:</div>
-          <div class="fw-semibold">
+          <div class="fw-bold text-dark font-mono">
             {{ ticket.sla_deadline.strftime('%b %d, %Y at %H:%M') if ticket.sla_deadline else 'No SLA configured' }}
           </div>
         </div>
         <div>
-          <div class="small text-muted">SLA Status:</div>
+          <div class="small text-muted mb-1">Compliance Status:</div>
           {% if ticket.sla_breached %}
             <span class="badge bg-danger">SLA Breached</span>
           {% elif ticket.status in ('Resolved', 'Closed') %}
-            <span class="badge bg-success">Resolved within SLA</span>
+            <span class="badge-soft badge-resolved"><i class="bi bi-check2"></i>Resolved within SLA</span>
           {% else %}
-            <span class="badge bg-info text-dark">Within SLA Window</span>
+            <span class="badge-soft badge-open"><i class="bi bi-clock"></i>Within SLA Window</span>
           {% endif %}
         </div>
       </div>
