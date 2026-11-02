@@ -21,3 +21,16 @@ class Notification(db.Model):
 
     user = relationship("User", back_populates="notifications")
     ticket = relationship("Ticket", back_populates="notifications")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "type": self.type,
+            "title": self.title,
+            "body": self.body,
+            "ticket_id": self.ticket_id,
+            "ticket_number": self.ticket.ticket_number if self.ticket else None,
+            "is_read": self.is_read,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from app.constants import DEFAULT_SLA_HOURS, ImpactLevel, Priority, Role, TicketCategory, TicketStatus, UrgencyLevel
 from app.extensions import db
 from app.models import Department, SlaRule, Technician, Ticket, TicketComment, TicketHistory, User
+from app.services.notification_service import notify_admins, notify_ticket_stakeholders
 from app.services.priority_engine import calculate_priority
 from app.utils.datetime import utcnow
 
@@ -158,6 +159,15 @@ def create_ticket(
     )
     db.session.add_all([h_create, h_priority])
     db.session.commit()
+
+    # In-app notification to administrators
+    notify_admins(
+        title=f"New Ticket: {ticket.ticket_number}",
+        body=f"Ticket '{ticket.title}' submitted by {requester.full_name} ({final_priority} priority).",
+        notification_type="ticket_created",
+        ticket_id=ticket.id,
+    )
+
     return ticket
 
 
@@ -205,7 +215,6 @@ def list_tickets_for_user(
     elif user.role == Role.TECHNICIAN:
         tech = db.session.scalar(select(Technician).where(Technician.user_id == user.id))
         if tech:
-            # Show assigned tickets or unassigned tickets
             query = query.where(
                 (Ticket.assigned_technician_id == tech.id)
                 | (Ticket.assigned_technician_id.is_(None))
@@ -242,7 +251,6 @@ def update_ticket_status(ticket: Ticket, new_status: str, user: User, note: Opti
 
     # Permissions
     if user.role == Role.EMPLOYEE:
-        # Employees can only reopen a resolved/closed ticket or close their resolved ticket
         if old_status in (TicketStatus.RESOLVED, TicketStatus.CLOSED) and new_status == TicketStatus.OPEN:
             pass  # Allowed to reopen
         elif old_status == TicketStatus.RESOLVED and new_status == TicketStatus.CLOSED:
@@ -250,7 +258,6 @@ def update_ticket_status(ticket: Ticket, new_status: str, user: User, note: Opti
         else:
             raise TicketError("Employees cannot perform this status transition", 403, "forbidden")
     elif user.role == Role.TECHNICIAN:
-        # Technicians cannot hard-delete; can move between Assigned, In Progress, Pending, Resolved
         if new_status == TicketStatus.CLOSED and not user.is_admin():
             raise TicketError("Only administrators and requesters may close tickets", 403, "forbidden")
 
@@ -261,7 +268,6 @@ def update_ticket_status(ticket: Ticket, new_status: str, user: User, note: Opti
     elif new_status == TicketStatus.CLOSED:
         ticket.closed_at = now
     elif new_status == TicketStatus.OPEN and old_status in (TicketStatus.RESOLVED, TicketStatus.CLOSED):
-        # Reopening clears resolution timestamps
         ticket.resolved_at = None
         ticket.closed_at = None
 
@@ -286,6 +292,16 @@ def update_ticket_status(ticket: Ticket, new_status: str, user: User, note: Opti
         db.session.add(comment)
 
     db.session.commit()
+
+    # Notify stakeholders
+    notify_ticket_stakeholders(
+        ticket=ticket,
+        title=f"Ticket {ticket.ticket_number} Updated",
+        body=f"Ticket status changed from '{old_status}' to '{new_status}' by {user.full_name}.",
+        notification_type="status_changed",
+        exclude_user_id=user.id,
+    )
+
     return ticket
 
 
@@ -294,7 +310,6 @@ def add_ticket_comment(ticket: Ticket, user: User, body: str) -> TicketComment:
     if not body or not body.strip():
         raise TicketError("Comment body is required", 422, "validation_error")
 
-    # Access check
     get_ticket_for_user(ticket.id, user)
 
     now = utcnow()
@@ -315,6 +330,15 @@ def add_ticket_comment(ticket: Ticket, user: User, body: str) -> TicketComment:
     )
     db.session.add_all([comment, history_entry])
     db.session.commit()
+
+    notify_ticket_stakeholders(
+        ticket=ticket,
+        title=f"New comment on {ticket.ticket_number}",
+        body=f"{user.full_name} commented: {body.strip()[:120]}...",
+        notification_type="comment_added",
+        exclude_user_id=user.id,
+    )
+
     return comment
 
 
@@ -329,7 +353,6 @@ def override_ticket_priority(ticket: Ticket, new_priority: str, admin_user: User
 
     old_priority = ticket.final_priority
     ticket.final_priority = new_priority
-    # Re-calculate SLA deadline with new priority
     ticket.sla_deadline = calculate_sla_deadline(new_priority, start_time=ticket.created_at)
 
     now = utcnow()
@@ -344,4 +367,13 @@ def override_ticket_priority(ticket: Ticket, new_priority: str, admin_user: User
     )
     db.session.add(history_entry)
     db.session.commit()
+
+    notify_ticket_stakeholders(
+        ticket=ticket,
+        title=f"Priority Changed: {ticket.ticket_number}",
+        body=f"Priority adjusted to '{new_priority}' by Administrator {admin_user.full_name}.",
+        notification_type="priority_override",
+        exclude_user_id=admin_user.id,
+    )
+
     return ticket

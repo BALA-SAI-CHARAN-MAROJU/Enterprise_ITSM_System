@@ -46,6 +46,14 @@
           <div class="col-sm-6">
             <i class="bi bi-hourglass-split me-1"></i>Urgency: <strong class="text-capitalize">{{ ticket.urgency }}</strong>
           </div>
+          <div class="col-sm-6">
+            <i class="bi bi-person-badge me-1"></i>Assigned Technician: 
+            <strong>{{ ticket.assigned_technician.user.full_name if ticket.assigned_technician and ticket.assigned_technician.user else 'Unassigned' }}</strong>
+          </div>
+          <div class="col-sm-6">
+            <i class="bi bi-building me-1"></i>Department: 
+            <strong>{{ ticket.department.name if ticket.department else 'General IT' }}</strong>
+          </div>
         </div>
       </div>
     </div>
@@ -127,7 +135,7 @@
     </div>
   </div>
 
-  <!-- Right column: Priority & SLA Status, Status Controls -->
+  <!-- Right column: Controls, Priority, SLA, and Technician Recommendation -->
   <div class="col-lg-4">
     <!-- Status Action Box -->
     <div class="card shadow-sm mb-4">
@@ -160,6 +168,43 @@
         {% endif %}
       </div>
     </div>
+
+    <!-- Technician Assignment & Recommendation Box (Admin only) -->
+    {% if current_user.is_admin() and assign_form %}
+      <div class="card shadow-sm border-primary mb-4">
+        <div class="card-header bg-primary text-white py-3">
+          <h6 class="card-title mb-0"><i class="bi bi-person-check me-2"></i>Automated Technician Assignment</h6>
+        </div>
+        <div class="card-body">
+          {% if recommendation %}
+            <div class="p-2 bg-light rounded border mb-3 small">
+              <div class="fw-bold text-dark mb-1">Intelligent Recommendation:</div>
+              {% if recommendation.recommended_technician_name %}
+                <div class="text-primary fw-semibold fs-6 mb-1">
+                  <i class="bi bi-award me-1"></i>{{ recommendation.recommended_technician_name }}
+                </div>
+                <div class="text-muted">{{ recommendation.justification }}</div>
+              {% else %}
+                <div class="text-warning fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>{{ recommendation.justification }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <form method="post" action="{{ url_for('web_tickets.assign', ticket_id=ticket.id) }}">
+            {{ assign_form.hidden_tag() }}
+            <div class="mb-3">
+              {{ assign_form.technician_id.label(class="form-label small fw-semibold") }}
+              {{ assign_form.technician_id(class="form-select form-select-sm") }}
+            </div>
+            <div class="mb-3">
+              {{ assign_form.override_reason.label(class="form-label small fw-semibold") }}
+              {{ assign_form.override_reason(class="form-control form-control-sm", placeholder="Provide reason if overriding recommendation") }}
+            </div>
+            {{ assign_form.submit(class="btn btn-primary btn-sm w-100") }}
+          </form>
+        </div>
+      </div>
+    {% endif %}
 
     <!-- Priority Breakdown Box -->
     <div class="card shadow-sm mb-4">

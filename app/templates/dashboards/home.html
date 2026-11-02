@@ -35,13 +35,171 @@
   <div class="col-md-3">
     <div class="card shadow-sm border-start border-success border-4">
       <div class="card-body">
-        <div class="text-muted small text-uppercase fw-bold">Resolved / Closed</div>
-        <div class="fs-2 fw-bold text-success">{{ resolved_count }}</div>
-        <div class="small text-muted">Successfully handled</div>
+        <div class="text-muted small text-uppercase fw-bold">
+          {% if admin_data %}SLA Compliance{% else %}Resolved / Closed{% endif %}
+        </div>
+        <div class="fs-2 fw-bold text-success">
+          {% if admin_data %}{{ admin_data.kpis.sla_compliance_rate }}%{% else %}{{ resolved_count }}{% endif %}
+        </div>
+        <div class="small text-muted">{% if admin_data %}Resolution compliance{% else %}Successfully handled{% endif %}</div>
       </div>
     </div>
   </div>
 </div>
+
+{% if admin_data %}
+  <!-- Admin Chart.js Visualizations Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>7-Day Ticket Activity Trends</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="trendChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Ticket Category Distribution</h6>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <canvas id="categoryChart" style="max-height: 240px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Tickets by Priority Level</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="priorityChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="card-title mb-0"><i class="bi bi-person-lines-fill me-2"></i>Technician Workload vs Capacity</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="workloadChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident Analysis & Recurring Problems Section -->
+  {% if incident_data and incident_data.recurring_patterns %}
+    <div class="card shadow-sm mb-4 border-warning">
+      <div class="card-header bg-warning bg-opacity-10 py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 text-dark"><i class="bi bi-lightbulb me-2 text-warning"></i>Incident Analysis: Recurring Issues</h5>
+        <span class="badge bg-warning text-dark">{{ incident_data.recurring_patterns|length }} Patterns Detected</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Keyword Cluster</th>
+                <th>Frequency</th>
+                <th>Primary Category</th>
+                <th>Hypothesis & Impact Analysis</th>
+                <th>Sample Tickets</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in incident_data.recurring_patterns %}
+                <tr>
+                  <td><span class="badge bg-dark fs-6">{{ p.keyword }}</span></td>
+                  <td class="fw-bold text-danger">{{ p.frequency }} tickets</td>
+                  <td><span class="badge bg-light text-dark border">{{ p.primary_category }}</span></td>
+                  <td class="small">{{ p.hypothesis }}</td>
+                  <td class="small">
+                    {% for t in p.sample_tickets %}
+                      <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="badge bg-light text-primary border text-decoration-none">
+                        {{ t.ticket_number }}
+                      </a>
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Technician Performance Analytics Table -->
+  {% if tech_performance %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Technician Performance Analytics</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Technician</th>
+                <th>Status</th>
+                <th>Certified Skills</th>
+                <th>Total Assigned</th>
+                <th>Active Tickets</th>
+                <th>Resolved</th>
+                <th>Avg Resolution Time</th>
+                <th>SLA Compliance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tp in tech_performance %}
+                <tr>
+                  <td class="fw-semibold">{{ tp.name }}</td>
+                  <td>
+                    {% if tp.availability_status == 'available' %}
+                      <span class="badge bg-success">Available</span>
+                    {% elif tp.availability_status == 'busy' %}
+                      <span class="badge bg-warning text-dark">Busy</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Unavailable</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% for s in tp.skills %}
+                      <span class="badge bg-light text-dark border">{{ s }}</span>
+                    {% else %}
+                      <span class="text-muted small">General IT</span>
+                    {% endfor %}
+                  </td>
+                  <td>{{ tp.total_assigned }}</td>
+                  <td>{{ tp.active_tickets }} / {{ tp.max_concurrent_tickets }}</td>
+                  <td class="text-success fw-bold">{{ tp.resolved_tickets }}</td>
+                  <td>{{ tp.avg_resolution_hours }} hrs</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height: 6px;">
+                        <div class="progress-bar {% if tp.sla_compliance_rate >= 90 %}bg-success{% elif tp.sla_compliance_rate >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             role="progressbar" style="width: {{ tp.sla_compliance_rate }}%;"></div>
+                      </div>
+                      <span class="small fw-bold">{{ tp.sla_compliance_rate }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
 
 <!-- Recent Tickets Section -->
 <div class="card shadow-sm">
@@ -108,4 +266,105 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if admin_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  // 1. 7-Day Trend Chart
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: {{ admin_data.charts.trends.labels|tojson }},
+      datasets: [
+        {
+          label: 'Tickets Created',
+          data: {{ admin_data.charts.trends.created|tojson }},
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'Tickets Resolved',
+          data: {{ admin_data.charts.trends.resolved|tojson }},
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25, 135, 84, 0.1)',
+          tension: 0.3,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+
+  // 2. Category Doughnut Chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ admin_data.charts.categories.labels|tojson }},
+      datasets: [{
+        data: {{ admin_data.charts.categories.data|tojson }},
+        backgroundColor: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#fd7e14', '#6c757d']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // 3. Priority Bar Chart
+  const priCtx = document.getElementById('priorityChart').getContext('2d');
+  new Chart(priCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ admin_data.charts.priorities.labels|tojson }},
+      datasets: [{
+        label: 'Tickets Count',
+        data: {{ admin_data.charts.priorities.data|tojson }},
+        backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0', '#6c757d']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+
+  // 4. Technician Workload Bar Chart
+  const workCtx = document.getElementById('workloadChart').getContext('2d');
+  new Chart(workCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ admin_data.charts.workloads.labels|tojson }},
+      datasets: [
+        {
+          label: 'Active Tickets',
+          data: {{ admin_data.charts.workloads.active|tojson }},
+          backgroundColor: '#0d6efd'
+        },
+        {
+          label: 'Max Concurrent Capacity',
+          data: {{ admin_data.charts.workloads.capacity|tojson }},
+          backgroundColor: '#e9ecef'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+</script>
+{% endif %}
 {% endblock %}

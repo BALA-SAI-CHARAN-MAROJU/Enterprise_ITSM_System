@@ -15,6 +15,7 @@
   <a href="{{ url_for('web_dashboards.home') }}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
   <a href="{{ url_for('web_tickets.list_tickets') }}"><i class="bi bi-ticket-perforated me-2"></i>Tickets</a>
   <a href="{{ url_for('web_tickets.create') }}"><i class="bi bi-plus-circle me-2"></i>Report Issue</a>
+  <a href="{{ url_for('web_notifications.list_notifications') }}"><i class="bi bi-bell me-2"></i>Notifications</a>
   <a href="{{ url_for('web_auth.profile') }}"><i class="bi bi-person-gear me-2"></i>Profile</a>
   <form action="{{ url_for('web_auth.logout') }}" method="post" class="mt-4 px-2">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

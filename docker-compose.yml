@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: itsm_postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: itsm_db
+      POSTGRES_USER: itsm_user
+      POSTGRES_PASSWORD: itsm_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itsm_user -d itsm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: itsm_web_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: wsgi.py
+      FLASK_CONFIG: production
+      SECRET_KEY: enterprise-itsm-production-secret-key-32-bytes
+      JWT_SECRET_KEY: enterprise-itsm-production-jwt-secret-key-32-bytes
+      DATABASE_URL: postgresql+psycopg://itsm_user:itsm_secure_password@db:5432/itsm_db
+      ENABLE_SCHEDULER: "false"
+      MAIL_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+    name: itsm_postgres_data

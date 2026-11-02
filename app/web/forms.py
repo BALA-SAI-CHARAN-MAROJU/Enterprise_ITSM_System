@@ -75,3 +75,9 @@ class TicketStatusForm(FlaskForm):
     status = SelectField("Update Status", validators=[DataRequired()])
     note = StringField("Status Change Note (optional)")
     submit = SubmitField("Update Status")
+
+
+class TechnicianAssignForm(FlaskForm):
+    technician_id = SelectField("Select Technician", coerce=int, validators=[DataRequired()])
+    override_reason = StringField("Override Justification (if overriding recommendation)")
+    submit = SubmitField("Confirm Assignment")

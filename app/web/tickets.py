@@ -2,8 +2,12 @@
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from sqlalchemy import select
 
 from app.constants import Priority, Role, TicketCategory, TicketStatus
+from app.extensions import db
+from app.models import Technician
+from app.services.assignment_engine import assign_technician, recommend_technician_for_ticket
 from app.services.ticket_service import (
     TicketError,
     add_ticket_comment,
@@ -12,7 +16,7 @@ from app.services.ticket_service import (
     list_tickets_for_user,
     update_ticket_status,
 )
-from app.web.forms import TicketCommentForm, TicketForm, TicketStatusForm
+from app.web.forms import TechnicianAssignForm, TicketCommentForm, TicketForm, TicketStatusForm
 
 web_tickets_bp = Blueprint("web_tickets", __name__, url_prefix="/tickets")
 
@@ -82,6 +86,7 @@ def detail(ticket_id: int):
 
     comment_form = TicketCommentForm()
     status_form = TicketStatusForm()
+    assign_form = TechnicianAssignForm()
 
     # Determine allowed next statuses based on role and current status
     allowed_statuses = []
@@ -100,12 +105,28 @@ def detail(ticket_id: int):
 
     status_form.status.choices = [(s, s) for s in allowed_statuses]
 
+    # For admins: prepare technician assignment recommendations
+    recommendation = None
+    all_technicians = []
+    if current_user.is_admin():
+        recommendation = recommend_technician_for_ticket(ticket)
+        all_technicians = db.session.scalars(select(Technician)).all()
+        assign_form.technician_id.choices = [
+            (t.id, f"{t.user.full_name} ({t.availability_status})")
+            for t in all_technicians if t.user
+        ]
+        if recommendation.recommended_technician_id:
+            assign_form.technician_id.data = recommendation.recommended_technician_id
+
     return render_template(
         "tickets/detail.html",
         ticket=ticket,
         comment_form=comment_form,
         status_form=status_form,
+        assign_form=assign_form,
         allowed_statuses=allowed_statuses,
+        recommendation=recommendation,
+        all_technicians=all_technicians,
     )
 
 
@@ -135,4 +156,36 @@ def change_status(ticket_id: int):
             flash(f"Ticket status changed to '{form.status.data}'.", "success")
         except TicketError as exc:
             flash(exc.message, "danger")
+    return redirect(url_for("web_tickets.detail", ticket_id=ticket_id))
+
+
+@web_tickets_bp.route("/<int:ticket_id>/assign", methods=["POST"])
+@login_required
+def assign(ticket_id: int):
+    if not current_user.is_admin():
+        flash("Only administrators can assign technicians.", "danger")
+        return redirect(url_for("web_tickets.detail", ticket_id=ticket_id))
+
+    ticket = get_ticket_for_user(ticket_id, current_user)
+    form = TechnicianAssignForm()
+    technicians = db.session.scalars(select(Technician)).all()
+    form.technician_id.choices = [(t.id, t.user.full_name) for t in technicians if t.user]
+
+    if form.validate_on_submit():
+        try:
+            rec = recommend_technician_for_ticket(ticket)
+            is_override = (
+                rec.recommended_technician_id is not None
+                and form.technician_id.data != rec.recommended_technician_id
+            )
+            assign_technician(
+                ticket=ticket,
+                technician_id=form.technician_id.data,
+                assigned_by=current_user,
+                is_override=is_override,
+                override_reason=form.override_reason.data,
+            )
+            flash("Technician assigned successfully.", "success")
+        except ValueError as exc:
+            flash(str(exc), "danger")
     return redirect(url_for("web_tickets.detail", ticket_id=ticket_id))

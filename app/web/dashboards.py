@@ -1,7 +1,11 @@
+"""Web views for Dashboards and Analytics Visualizations."""
+
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
-from app.constants import TicketStatus
+from app.constants import Role, TicketStatus
+from app.services.analytics import get_admin_dashboard_metrics, get_technician_performance_analytics
+from app.services.incident_analysis import analyze_recurring_incidents
 from app.services.ticket_service import list_tickets_for_user
 
 web_dashboards_bp = Blueprint("web_dashboards", __name__)
@@ -21,8 +25,18 @@ def home():
     open_count = sum(1 for t in tickets if t.status in (TicketStatus.OPEN, TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS, TicketStatus.PENDING, TicketStatus.ON_HOLD))
     resolved_count = sum(1 for t in tickets if t.status in (TicketStatus.RESOLVED, TicketStatus.CLOSED))
     critical_count = sum(1 for t in tickets if t.final_priority == "Critical" and t.status not in (TicketStatus.RESOLVED, TicketStatus.CLOSED))
+    recent_tickets = tickets[:10]
 
-    recent_tickets = tickets[:5]
+    # Admin Dashboard Extra Analytics & Visualizations
+    admin_data = None
+    incident_data = None
+    tech_performance = None
+
+    if current_user.is_admin():
+        admin_data = get_admin_dashboard_metrics()
+        incident_data = analyze_recurring_incidents()
+        tech_performance = get_technician_performance_analytics()
+
     return render_template(
         "dashboards/home.html",
         total_tickets=len(tickets),
@@ -30,4 +44,7 @@ def home():
         resolved_count=resolved_count,
         critical_count=critical_count,
         recent_tickets=recent_tickets,
+        admin_data=admin_data,
+        incident_data=incident_data,
+        tech_performance=tech_performance,
     )

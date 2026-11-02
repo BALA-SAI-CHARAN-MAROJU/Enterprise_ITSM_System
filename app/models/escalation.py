@@ -19,3 +19,14 @@ class Escalation(db.Model):
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     ticket = relationship("Ticket", back_populates="escalations")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "ticket_id": self.ticket_id,
+            "ticket_number": self.ticket.ticket_number if self.ticket else None,
+            "level": self.level,
+            "reason": self.reason,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+        }
