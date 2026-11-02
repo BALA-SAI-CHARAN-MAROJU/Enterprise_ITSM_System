@@ -9,15 +9,16 @@ Enterprise IT Service Management (ITSM) web application with intelligent rule-ba
 - **Architecture:** Modular monolith using application factory (`create_app`), Blueprints (`/api` and web), and dedicated service layer (`app/services`).
 
 ## 2. Current Development Phase & Status
-- **Current State:** **All 9 functional modules are fully implemented, integrated with both REST API and Web UI, elevated with modern enterprise design system, and verified by 42 automated tests.**
-- **Overall Completion:** **100% Core Functionality & Executive UI Complete**
-- **Automated Test Results:** **42 passed (100% pass rate)**
+- **Current State:** **All 9 functional modules are fully implemented, enhanced with Corporate Role Differentiation, Problem-Based Assignment, and Dynamic Technician Priority Queue Re-ordering, verified by 46 automated tests.**
+- **Overall Completion:** **100% Core Functionality, Executive UI & Dynamic Queue Engine Complete**
+- **Automated Test Results:** **46 passed (100% pass rate)**
 
 ## 3. What Has Been Implemented and Verified
 1. **Module 1: Authentication & User Management:**
    - Registration, login, logout, profile update.
    - Dual authentication: Web session cookies (Flask-Login + CSRF) and REST API (Flask-JWT-Extended).
    - Role-Based Access Control (`admin`, `technician`, `employee`).
+   - Corporate employee role differentiation: Job titles, Departments (`Executive`, `Finance & Accounting`, `Software Engineering`, `Human Resources`, `Sales & Client Success`, `Operations`), and `is_vip` Executive flag.
 2. **Module 2: Ticket Management:**
    - Sequential ticket numbering format: `INC-YYYY-XXXXX`.
    - SLA deadline automatically calculated from priority.
@@ -27,12 +28,15 @@ Enterprise IT Service Management (ITSM) web application with intelligent rule-ba
    - Web views (`/tickets`, `/tickets/new`, `/tickets/<id>`) and REST endpoints (`/api/tickets/*`).
 3. **Module 3: Intelligent Ticket Prioritization Engine:**
    - Deterministic rule engine in `app/services/priority_engine.py`.
-   - Weighs business impact (0–40 pts), urgency (0–30 pts), affected users (0–20 pts), and category modifiers (e.g., Security +10, Database +8, Network +8).
+   - Weighs business impact (0–40 pts), urgency (0–30 pts), affected users (0–20 pts), category modifiers (Security +10, Database +8, Network +8), Department business continuity weighting (`Executive` +15, `Finance` +10, `Engineering` +8), and VIP Requester status (+15 pts).
    - Generates human-readable justification reasons and assigns recommended priority (`Critical`, `High`, `Medium`, `Low`).
    - Admin override supported with mandatory justification audit log.
-4. **Module 4: Automated Technician Recommendation:**
-   - Evaluates expertise matching from `technician_skills`, active workload balance, and availability status.
-   - Computes transparent match score (0-100) and displays justification reason.
+4. **Module 4: Automated Technician Recommendation & Dynamic Work Queue Re-ordering:**
+   - Matches specific problem domain to certified technician skill category (`technician_skills`).
+   - Workload balance calculation and availability check (`available`, `busy`, `unavailable`).
+   - Technician tiers (Tier 1 Support, Tier 2 Systems, Tier 3 Senior Specialist).
+   - **Dynamic Work Queue Priority Engine (`app/services/queue_engine.py`)**: calculates a technician's dynamic dispatch score (0-100+) based on incident severity, SLA countdown, and VIP/Department impact. Re-orders tickets dynamically (Rank #1, #2, #3...) when higher urgency or VIP issues arrive.
+   - REST API endpoint: `GET /api/technicians/<tech_id>/queue`.
    - Admin manual assignment and override workflow.
 5. **Module 5: SLA Monitoring & Escalation:**
    - Configurable SLA priority rules (Critical: 2h, High: 6h, Medium: 24h, Low: 48h).

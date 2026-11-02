@@ -39,6 +39,7 @@ Automated Test Suite: **42 passed (100% pass rate)**
   * [x] Registration, login, logout (Web & REST API)
   * [x] Password hashing (PBKDF2:SHA256)
   * [x] Role-based decorators (`roles_required`, `jwt_roles_required`, `admin_required`)
+  * [x] Corporate employee role differentiation (Job titles, Departments: Executive, Finance, Engineering, HR, Sales, Operations, and VIP executive flag)
   * [x] Profile update (name and password)
 * [x] Module 2: Ticket Management
   * [x] Sequential ticket numbering (`INC-YYYY-XXXXX`)
@@ -51,15 +52,17 @@ Automated Test Suite: **42 passed (100% pass rate)**
   * [x] Ticket reopening by requester or admin
 * [x] Module 3: Intelligent Ticket Prioritization Engine
   * [x] Rule-based scoring engine (`app/services/priority_engine.py`)
-  * [x] Factors: Category modifiers, business impact, urgency, affected user count
+  * [x] Factors: Category modifiers, business impact, urgency, affected user count, Department continuity weighting (Executive/Finance/Engineering), and VIP Requester status
   * [x] Recommended priority (`Critical`, `High`, `Medium`, `Low`)
   * [x] Justification reasons generated and displayed
   * [x] Store recommended vs final priority
   * [x] Admin manual override with required audit justification
-* [x] Module 4: Automated Technician Recommendation
-  * [x] Expertise matching from `technician_skills`
+* [x] Module 4: Automated Technician Recommendation & Dynamic Work Queue Re-ordering
+  * [x] Problem category matching to technician certified domain expertise (`technician_skills`)
   * [x] Workload balance calculation (active ticket count vs max capacity)
   * [x] Availability check (`available`, `busy`, `unavailable`)
+  * [x] Technician tiers (Tier 1 Support, Tier 2 Systems, Tier 3 Senior Specialist)
+  * [x] Dynamic Work Queue Priority Engine (`app/services/queue_engine.py`): dynamically re-orders a technician's active tickets (Rank #1, #2, #3) based on incident severity, SLA urgency countdown, and VIP/Department impact
   * [x] Assignment recommendation API and manual assignment override
 * [x] Module 5: SLA Monitoring & Escalation
   * [x] Default SLA rules seeded (Critical: 2h, High: 6h, Medium: 24h, Low: 48h)
