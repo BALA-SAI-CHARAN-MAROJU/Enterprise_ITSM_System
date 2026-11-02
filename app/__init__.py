@@ -83,11 +83,11 @@ def _register_blueprints(app: Flask) -> None:
 def _register_cli(app: Flask) -> None:
     @app.cli.command("seed-defaults")
     def seed_defaults_command():
-        """Insert default SLA rules if they are missing."""
-        from app.services.defaults import seed_default_sla_rules
+        """Insert default SLA rules, corporate departments, and roles."""
+        from app.services.defaults import seed_organization_data
 
-        seed_default_sla_rules()
-        print("Default SLA rules ensured.")
+        seed_organization_data()
+        print("Default SLA rules, corporate departments, and roles ensured.")
 
     @app.cli.command("sla-scan")
     def sla_scan_command():

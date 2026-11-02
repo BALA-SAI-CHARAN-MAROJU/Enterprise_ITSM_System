@@ -114,3 +114,20 @@ def update_availability(tech_id: int):
     tech.availability_status = status
     db.session.commit()
     return {"technician": tech.to_dict()}, 200
+
+
+@api_technicians_bp.get("/<int:tech_id>/queue")
+@jwt_required()
+def get_technician_queue(tech_id: int):
+    """Retrieve dynamic prioritized work queue for a specific technician."""
+    tech = db.session.get(Technician, tech_id)
+    if not tech:
+        return api_error("Technician not found", 404, "not_found")
+    from app.services.queue_engine import get_technician_prioritized_work_queue
+    queue = get_technician_prioritized_work_queue(tech.id)
+    return {
+        "technician_id": tech.id,
+        "technician_name": tech.user.full_name,
+        "queue_count": len(queue),
+        "queue": [item.to_dict() for item in queue]
+    }, 200

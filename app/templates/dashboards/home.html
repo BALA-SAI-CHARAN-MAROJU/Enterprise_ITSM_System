@@ -67,6 +67,103 @@
   </div>
 </div>
 
+{% if tech_queue is not none %}
+  <!-- Technician Dynamic Prioritized Work Queue -->
+  <div class="card shadow-sm mb-4 border-primary border-opacity-25">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <div class="kpi-icon-badge bg-primary bg-opacity-10 text-primary" style="width: 34px; height: 34px; font-size: 1.1rem;">
+          <i class="bi bi-sort-numeric-down"></i>
+        </div>
+        <div>
+          <h5 class="card-title mb-0 fw-bold text-dark">Intelligent Dispatch Queue</h5>
+          <div class="text-muted small" style="font-size: 0.75rem;">Dynamic work order calculated by incident urgency, SLA risk, and requester role criticality</div>
+        </div>
+      </div>
+      <span class="badge bg-primary px-3 py-2 text-white">{{ tech_queue|length }} Active Incident(s)</span>
+    </div>
+    <div class="card-body p-0">
+      {% if tech_queue %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 90px;">Dispatch Rank</th>
+                <th>Ticket Details</th>
+                <th>Requester & Corporate Role</th>
+                <th>Priority</th>
+                <th>SLA Clock</th>
+                <th>Priority Order Justification</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in tech_queue %}
+                <tr class="{% if item.queue_rank == 1 %}table-light border-start border-primary border-4{% endif %}">
+                  <td>
+                    <span class="badge {% if item.queue_rank == 1 %}bg-primary{% elif item.queue_rank == 2 %}bg-indigo text-white{% else %}bg-secondary bg-opacity-25 text-dark{% endif %} px-2.5 py-1.5 fw-bold" style="font-size: 0.82rem;">
+                      #{{ item.queue_rank }}
+                    </span>
+                    <div class="text-muted font-mono small text-center mt-1" style="font-size: 0.7rem;">{{ item.queue_score }} pts</div>
+                  </td>
+                  <td>
+                    <a href="{{ url_for('web_tickets.detail', ticket_id=item.ticket_id) }}" class="fw-bold text-primary font-mono text-decoration-none">
+                      {{ item.ticket_number }}
+                    </a>
+                    <div class="fw-semibold text-dark text-truncate" style="max-width: 250px;">{{ item.title }}</div>
+                    <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">{{ item.category }}</span>
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark small">{{ item.requester_name }}</div>
+                    <div class="text-muted small" style="font-size: 0.75rem;">{{ item.requester_role }}</div>
+                    <span class="badge {% if item.is_vip %}bg-danger bg-opacity-10 text-danger border border-danger-subtle{% else %}bg-light text-secondary border{% endif %}" style="font-size: 0.68rem;">
+                      {% if item.is_vip %}<i class="bi bi-star-fill me-1"></i>VIP · {% endif %}{{ item.requester_department }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if item.final_priority == 'Critical' %}
+                      <span class="badge-soft badge-critical"><i class="bi bi-fire"></i>Critical</span>
+                    {% elif item.final_priority == 'High' %}
+                      <span class="badge-soft badge-high"><i class="bi bi-exclamation-triangle"></i>High</span>
+                    {% elif item.final_priority == 'Medium' %}
+                      <span class="badge-soft badge-medium"><i class="bi bi-dash-circle"></i>Medium</span>
+                    {% else %}
+                      <span class="badge-soft badge-low"><i class="bi bi-arrow-down-circle"></i>Low</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if item.sla_breached %}
+                      <span class="badge bg-danger text-uppercase">Breached</span>
+                    {% else %}
+                      <span class="fw-semibold font-mono {% if 'mins' in item.time_remaining_str %}text-danger{% elif 'hrs' in item.time_remaining_str %}text-warning{% else %}text-muted{% endif %} small">
+                        <i class="bi bi-stopwatch me-1"></i>{{ item.time_remaining_str }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-muted" style="max-width: 260px; line-height: 1.4;">
+                    {{ item.queue_justification }}
+                  </td>
+                  <td class="text-end">
+                    <a href="{{ url_for('web_tickets.detail', ticket_id=item.ticket_id) }}" class="btn btn-sm btn-outline-primary px-3 py-1">
+                      Resolve <i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-check2-circle fs-1 text-success mb-2 d-block"></i>
+          <div class="fw-semibold">Your work queue is completely clear!</div>
+          <div class="small text-muted">No open incidents currently awaiting your action.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
 {% if admin_data %}
   <!-- Admin Chart.js Visualizations Row -->
   <div class="row g-3 mb-4">

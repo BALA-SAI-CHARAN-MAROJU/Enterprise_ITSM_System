@@ -96,12 +96,21 @@ def create_ticket(
     except (TypeError, ValueError):
         user_count = 1
 
+    dept_id = department_id or getattr(requester, "department_id", None)
+    dept = db.session.get(Department, dept_id) if dept_id else getattr(requester, "department", None)
+    dept_name = dept.name if dept else getattr(requester, "department_name", None)
+    is_vip = getattr(requester, "is_vip", False)
+    job_title = getattr(requester, "job_title", None)
+
     # 1. Run rule-based priority engine
     priority_res = calculate_priority(
         category=category,
         business_impact=impact,
         urgency=urgency,
         affected_users_count=user_count,
+        requester_department=dept_name,
+        is_vip=is_vip,
+        job_title=job_title,
     )
     rec_priority = priority_res.recommended_priority
 
@@ -114,9 +123,6 @@ def create_ticket(
     created_at = utcnow()
     deadline = calculate_sla_deadline(final_priority, start_time=created_at)
     ticket_num = _generate_ticket_number()
-
-    # Use requester's department if none specified
-    dept_id = department_id or requester.department_id
 
     ticket = Ticket(
         ticket_number=ticket_num,

@@ -17,6 +17,8 @@ class Technician(db.Model):
         String(20), default=Availability.AVAILABLE, nullable=False
     )
     max_concurrent_tickets: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    tier: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    specialization: Mapped[str | None] = mapped_column(String(100), default="General IT Support")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     user = relationship("User", back_populates="technician_profile")
@@ -31,6 +33,8 @@ class Technician(db.Model):
             "email": self.user.email if self.user else None,
             "availability_status": self.availability_status,
             "max_concurrent_tickets": self.max_concurrent_tickets,
+            "tier": self.tier,
+            "specialization": self.specialization,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
         if include_skills:

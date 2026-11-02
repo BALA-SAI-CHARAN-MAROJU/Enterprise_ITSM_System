@@ -136,6 +136,9 @@
     const catMods = { 'Security': 10, 'Database': 8, 'Network': 8, 'Hardware': 4, 'Software': 0, 'Other': 0 };
     const slaWindows = { 'Critical': '2 Hours', 'High': '6 Hours', 'Medium': '24 Hours', 'Low': '48 Hours' };
 
+    const isVip = {{ 'true' if current_user.is_vip else 'false' }};
+    const deptName = {{ (current_user.department_name if current_user.department_name else 'General')|tojson }};
+
     const impact = document.getElementById('impactInput').value;
     const urgency = document.getElementById('urgencyInput').value;
     const cat = document.getElementById('categoryInput').value;
@@ -149,13 +152,21 @@
     const impScore = impactScores[impact] || 10;
     const urgScore = urgencyScores[urgency] || 6;
     const modScore = catMods[cat] || 0;
-    const total = impScore + urgScore + userScore + modScore;
+
+    let deptBonus = 0;
+    if (deptName.toLowerCase().includes('executive')) deptBonus = 15;
+    else if (deptName.toLowerCase().includes('finance')) deptBonus = 10;
+    else if (deptName.toLowerCase().includes('engineering')) deptBonus = 8;
+    else deptBonus = 2;
+
+    const vipBonus = isVip ? 15 : 0;
+    const total = impScore + urgScore + userScore + modScore + deptBonus + vipBonus;
 
     let priority = 'Low';
     let badgeHtml = '<span class="badge-soft badge-low fs-6"><i class="bi bi-arrow-down-circle"></i>Low</span>';
     let barColor = '#64748b';
 
-    if ((impact === 'critical' && urgency === 'critical') || (count >= 100 && (impact === 'critical' || impact === 'high'))) {
+    if ((impact === 'critical' && urgency === 'critical') || (count >= 100 && (impact === 'critical' || impact === 'high')) || (isVip && (impact === 'critical' || impact === 'high'))) {
       priority = 'Critical';
       badgeHtml = '<span class="badge-soft badge-critical fs-6"><i class="bi bi-fire"></i>Critical</span>';
       barColor = '#ef4444';
@@ -181,13 +192,17 @@
     barEl.style.width = `${Math.min(100, Math.max(10, total))}%`;
     barEl.style.backgroundColor = barColor;
 
-    const reasonsEl = document.getElementById('previewReasons');
-    reasonsEl.innerHTML = `
+    let reasonsHtml = `
       <li class="d-flex justify-content-between"><span class="text-muted">Business Impact (${impact}):</span> <strong class="text-dark">+${impScore} pts</strong></li>
       <li class="d-flex justify-content-between"><span class="text-muted">Urgency (${urgency}):</span> <strong class="text-dark">+${urgScore} pts</strong></li>
       <li class="d-flex justify-content-between"><span class="text-muted">Users Affected (${count}):</span> <strong class="text-dark">+${userScore} pts</strong></li>
       <li class="d-flex justify-content-between"><span class="text-muted">Category Risk (${cat}):</span> <strong class="text-dark">+${modScore} pts</strong></li>
+      <li class="d-flex justify-content-between"><span class="text-muted">Department (${deptName}):</span> <strong class="text-dark">+${deptBonus} pts</strong></li>
     `;
+    if (isVip) {
+      reasonsHtml += `<li class="d-flex justify-content-between text-danger"><span class="fw-semibold"><i class="bi bi-star-fill me-1"></i>VIP Requester:</span> <strong>+${vipBonus} pts</strong></li>`;
+    }
+    document.getElementById('previewReasons').innerHTML = reasonsHtml;
   }
 
   document.getElementById('impactInput').addEventListener('change', updateLivePriority);

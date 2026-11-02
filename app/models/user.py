@@ -19,6 +19,8 @@ class User(UserMixin, db.Model):
     first_name: Mapped[str] = mapped_column(String(80), nullable=False)
     last_name: Mapped[str] = mapped_column(String(80), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default=Role.EMPLOYEE)
+    job_title: Mapped[str | None] = mapped_column(String(100), default="Employee")
+    is_vip: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -49,6 +51,10 @@ class User(UserMixin, db.Model):
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}".strip()
 
+    @property
+    def department_name(self) -> str:
+        return self.department.name if self.department else "General"
+
     def is_admin(self) -> bool:
         return self.role == Role.ADMIN
 
@@ -63,6 +69,9 @@ class User(UserMixin, db.Model):
             "last_name": self.last_name,
             "full_name": self.full_name,
             "role": self.role,
+            "job_title": self.job_title,
+            "is_vip": self.is_vip,
             "department_id": self.department_id,
+            "department_name": self.department_name,
             "is_active": self.is_active,
         }

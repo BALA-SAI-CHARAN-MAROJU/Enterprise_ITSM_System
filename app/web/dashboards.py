@@ -31,11 +31,15 @@ def home():
     admin_data = None
     incident_data = None
     tech_performance = None
+    tech_queue = None
 
     if current_user.is_admin():
         admin_data = get_admin_dashboard_metrics()
         incident_data = analyze_recurring_incidents()
         tech_performance = get_technician_performance_analytics()
+    elif current_user.is_technician() and current_user.technician_profile:
+        from app.services.queue_engine import get_technician_prioritized_work_queue
+        tech_queue = get_technician_prioritized_work_queue(current_user.technician_profile.id)
 
     return render_template(
         "dashboards/home.html",
@@ -47,4 +51,5 @@ def home():
         admin_data=admin_data,
         incident_data=incident_data,
         tech_performance=tech_performance,
+        tech_queue=tech_queue,
     )
