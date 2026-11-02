@@ -40,6 +40,8 @@ Automated Test Suite: **42 passed (100% pass rate)**
   * [x] Password hashing (PBKDF2:SHA256)
   * [x] Role-based decorators (`roles_required`, `jwt_roles_required`, `admin_required`)
   * [x] Corporate employee role differentiation (Job titles, Departments: Executive, Finance, Engineering, HR, Sales, Operations, and VIP executive flag)
+  * [x] Admin Employee Directory & Role Assignment Module (`/admin/users` & `/admin/users/<id>/edit`): allows Admin to assign designated corporate departments, job titles, VIP status, system roles, and technician tiers/skills
+  * [x] Admin User Management REST API (`GET /api/users`, `PUT /api/users/<id>`)
   * [x] Profile update (name and password)
 * [x] Module 2: Ticket Management
   * [x] Sequential ticket numbering (`INC-YYYY-XXXXX`)

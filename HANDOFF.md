@@ -9,9 +9,9 @@ Enterprise IT Service Management (ITSM) web application with intelligent rule-ba
 - **Architecture:** Modular monolith using application factory (`create_app`), Blueprints (`/api` and web), and dedicated service layer (`app/services`).
 
 ## 2. Current Development Phase & Status
-- **Current State:** **All 9 functional modules are fully implemented, enhanced with Corporate Role Differentiation, Problem-Based Assignment, and Dynamic Technician Priority Queue Re-ordering, verified by 46 automated tests.**
-- **Overall Completion:** **100% Core Functionality, Executive UI & Dynamic Queue Engine Complete**
-- **Automated Test Results:** **46 passed (100% pass rate)**
+- **Current State:** **All 9 functional modules are fully implemented, enhanced with Admin Corporate Role Management, Problem-Based Assignment, and Dynamic Technician Priority Queue Re-ordering, verified by 51 automated tests.**
+- **Overall Completion:** **100% Core Functionality, Executive UI, Admin Role Management & Dynamic Queue Engine Complete**
+- **Automated Test Results:** **51 passed (100% pass rate)**
 
 ## 3. What Has Been Implemented and Verified
 1. **Module 1: Authentication & User Management:**
@@ -19,6 +19,7 @@ Enterprise IT Service Management (ITSM) web application with intelligent rule-ba
    - Dual authentication: Web session cookies (Flask-Login + CSRF) and REST API (Flask-JWT-Extended).
    - Role-Based Access Control (`admin`, `technician`, `employee`).
    - Corporate employee role differentiation: Job titles, Departments (`Executive`, `Finance & Accounting`, `Software Engineering`, `Human Resources`, `Sales & Client Success`, `Operations`), and `is_vip` Executive flag.
+   - **Admin Employee Directory & Role Assignment Module (`/admin/users`, `/admin/users/<id>/edit`, and REST API `/api/users/*`)**: allows administrators to view all personnel and designate their corporate department, job title, VIP priority status, system access role, and configure technician tiers and problem-solving skills.
 2. **Module 2: Ticket Management:**
    - Sequential ticket numbering format: `INC-YYYY-XXXXX`.
    - SLA deadline automatically calculated from priority.
