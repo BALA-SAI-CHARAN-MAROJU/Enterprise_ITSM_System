@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Report Issue · Enterprise ITSM{% endblock %}
+{% block heading %}Create Support Ticket{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">Ticket Details</h5>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('web_tickets.create') }}" id="ticketForm">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.title.label(class="form-label fw-semibold") }}
+            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="e.g., Cannot connect to production PostgreSQL database") }}
+            {% for error in form.title.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.description.label(class="form-label fw-semibold") }}
+            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=5, placeholder="Provide complete steps, error messages, and context...") }}
+            {% for error in form.description.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.category.label(class="form-label fw-semibold") }}
+              {{ form.category(class="form-select", id="categoryInput") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.affected_users_count.label(class="form-label fw-semibold") }}
+              {{ form.affected_users_count(class="form-control", id="usersInput", min="1") }}
+              {% for error in form.affected_users_count.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              {{ form.business_impact.label(class="form-label fw-semibold") }}
+              {{ form.business_impact(class="form-select", id="impactInput") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.urgency.label(class="form-label fw-semibold") }}
+              {{ form.urgency(class="form-select", id="urgencyInput") }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('web_tickets.list_tickets') }}" class="btn btn-outline-secondary">Cancel</a>
+            {{ form.submit(class="btn btn-primary px-4") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm border-primary mb-4">
+      <div class="card-header bg-primary text-white py-3">
+        <h6 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Intelligent Prioritization Engine</h6>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">
+          Our rule-based engine dynamically computes priority and SLA resolution targets from impact, urgency, affected users, and category risk.
+        </p>
+        <div class="p-3 bg-light rounded border mb-3">
+          <div class="small text-muted text-uppercase fw-bold">Live Estimated Priority</div>
+          <div class="h4 my-1" id="previewPriorityBadge">
+            <span class="badge bg-secondary">Calculating...</span>
+          </div>
+          <div class="small text-muted" id="previewScore">Score: --/100</div>
+        </div>
+        <div class="small">
+          <div class="fw-bold mb-1">Reasoning Factors:</div>
+          <ul class="list-unstyled mb-0" id="previewReasons">
+            <li class="text-muted"><i class="bi bi-arrow-right-short text-primary"></i> Impact weighting (0-40 pts)</li>
+            <li class="text-muted"><i class="bi bi-arrow-right-short text-primary"></i> Urgency weighting (0-30 pts)</li>
+            <li class="text-muted"><i class="bi bi-arrow-right-short text-primary"></i> Affected user volume (0-20 pts)</li>
+            <li class="text-muted"><i class="bi bi-arrow-right-short text-primary"></i> Operational category modifier</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function updateLivePriority() {
+    const impactScores = { 'critical': 40, 'high': 30, 'medium': 20, 'low': 10 };
+    const urgencyScores = { 'critical': 30, 'high': 22, 'medium': 14, 'low': 6 };
+    const catMods = { 'Security': 10, 'Database': 8, 'Network': 8, 'Hardware': 4, 'Software': 0, 'Other': 0 };
+
+    const impact = document.getElementById('impactInput').value;
+    const urgency = document.getElementById('urgencyInput').value;
+    const cat = document.getElementById('categoryInput').value;
+    const count = parseInt(document.getElementById('usersInput').value) || 1;
+
+    let userScore = 5;
+    if (count >= 50) userScore = 20;
+    else if (count >= 11) userScore = 15;
+    else if (count >= 2) userScore = 10;
+
+    const impScore = impactScores[impact] || 10;
+    const urgScore = urgencyScores[urgency] || 6;
+    const modScore = catMods[cat] || 0;
+    const total = impScore + urgScore + userScore + modScore;
+
+    let priority = 'Low';
+    let badgeClass = 'bg-secondary';
+    if ((impact === 'critical' && urgency === 'critical') || (count >= 100 && (impact === 'critical' || impact === 'high'))) {
+      priority = 'Critical';
+      badgeClass = 'bg-danger';
+    } else if (total >= 75) {
+      priority = 'Critical';
+      badgeClass = 'bg-danger';
+    } else if (total >= 55) {
+      priority = 'High';
+      badgeClass = 'bg-warning text-dark';
+    } else if (total >= 35) {
+      priority = 'Medium';
+      badgeClass = 'bg-info text-dark';
+    }
+
+    const badgeEl = document.getElementById('previewPriorityBadge');
+    badgeEl.innerHTML = `<span class="badge ${badgeClass}">${priority}</span>`;
+    document.getElementById('previewScore').innerText = `Estimated Score: ${total}/100`;
+
+    const reasonsEl = document.getElementById('previewReasons');
+    reasonsEl.innerHTML = `
+      <li><i class="bi bi-check2 text-success me-1"></i>Impact (${impact}): +${impScore} pts</li>
+      <li><i class="bi bi-check2 text-success me-1"></i>Urgency (${urgency}): +${urgScore} pts</li>
+      <li><i class="bi bi-check2 text-success me-1"></i>Users (${count}): +${userScore} pts</li>
+      <li><i class="bi bi-check2 text-success me-1"></i>Category (${cat}): +${modScore} pts</li>
+    `;
+  }
+
+  document.getElementById('impactInput').addEventListener('change', updateLivePriority);
+  document.getElementById('urgencyInput').addEventListener('change', updateLivePriority);
+  document.getElementById('categoryInput').addEventListener('change', updateLivePriority);
+  document.getElementById('usersInput').addEventListener('input', updateLivePriority);
+  updateLivePriority();
+</script>
+{% endblock %}

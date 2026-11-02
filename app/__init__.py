@@ -69,13 +69,14 @@ def _register_extensions(app: Flask) -> None:
 
 def _register_blueprints(app: Flask) -> None:
     from app.api import create_api_blueprint
-    from app.web import web_auth_bp, web_dashboards_bp
+    from app.web import web_auth_bp, web_dashboards_bp, web_tickets_bp
 
     api_bp = create_api_blueprint()
     csrf.exempt(api_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(web_dashboards_bp)
     app.register_blueprint(web_auth_bp)
+    app.register_blueprint(web_tickets_bp)
 
 
 def _register_cli(app: Flask) -> None:

@@ -1,33 +1,110 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block heading %}{{ current_user.role|capitalize }} dashboard{% endblock %}
+{% block title %}Dashboard · Enterprise ITSM{% endblock %}
+{% block heading %}{{ current_user.role|capitalize }} Dashboard{% endblock %}
+
 {% block content %}
-<div class="row g-3">
-  <div class="col-md-4">
-    <div class="card shadow-sm">
+<!-- Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm border-start border-primary border-4">
       <div class="card-body">
-        <div class="text-muted small">Signed in as</div>
-        <div class="fw-semibold">{{ current_user.full_name }}</div>
-        <div>{{ current_user.email }}</div>
+        <div class="text-muted small text-uppercase fw-bold">Total Tickets</div>
+        <div class="fs-2 fw-bold text-primary">{{ total_tickets }}</div>
+        <div class="small text-muted">{% if current_user.role == 'employee' %}Submitted by you{% else %}System-wide{% endif %}</div>
       </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card shadow-sm">
+  <div class="col-md-3">
+    <div class="card shadow-sm border-start border-warning border-4">
       <div class="card-body">
-        <div class="text-muted small">Role</div>
-        <div class="fw-semibold text-capitalize">{{ current_user.role }}</div>
-        <div class="small text-muted">Ticket and analytics modules land in the next backend phase.</div>
+        <div class="text-muted small text-uppercase fw-bold">Active / In Progress</div>
+        <div class="fs-2 fw-bold text-warning">{{ open_count }}</div>
+        <div class="small text-muted">Awaiting resolution</div>
       </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card shadow-sm">
+  <div class="col-md-3">
+    <div class="card shadow-sm border-start border-danger border-4">
       <div class="card-body">
-        <div class="text-muted small">Account status</div>
-        <div class="fw-semibold">{% if current_user.is_active %}Active{% else %}Disabled{% endif %}</div>
-        <a href="{{ url_for('web_auth.profile') }}">Edit profile</a>
+        <div class="text-muted small text-uppercase fw-bold">Critical Priority</div>
+        <div class="fs-2 fw-bold text-danger">{{ critical_count }}</div>
+        <div class="small text-muted">Active critical issues</div>
       </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm border-start border-success border-4">
+      <div class="card-body">
+        <div class="text-muted small text-uppercase fw-bold">Resolved / Closed</div>
+        <div class="fs-2 fw-bold text-success">{{ resolved_count }}</div>
+        <div class="small text-muted">Successfully handled</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Tickets Section -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0"><i class="bi bi-clock me-2"></i>Recent Tickets</h5>
+    <a href="{{ url_for('web_tickets.list_tickets') }}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Ticket #</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>SLA Deadline</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_tickets %}
+            {% for t in recent_tickets %}
+              <tr>
+                <td class="fw-semibold">
+                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="text-decoration-none">
+                    {{ t.ticket_number }}
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ url_for('web_tickets.detail', ticket_id=t.id) }}" class="text-dark text-decoration-none">
+                    {{ t.title }}
+                  </a>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ t.category }}</span></td>
+                <td>
+                  {% if t.final_priority == 'Critical' %}
+                    <span class="badge bg-danger">Critical</span>
+                  {% elif t.final_priority == 'High' %}
+                    <span class="badge bg-warning text-dark">High</span>
+                  {% elif t.final_priority == 'Medium' %}
+                    <span class="badge bg-info text-dark">Medium</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Low</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-primary">{{ t.status }}</span>
+                </td>
+                <td class="small">{{ t.sla_deadline.strftime('%Y-%m-%d %H:%M') if t.sla_deadline else '-' }}</td>
+                <td class="small text-muted">{{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '-' }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                No tickets reported yet. Click "New Ticket" to create one!
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

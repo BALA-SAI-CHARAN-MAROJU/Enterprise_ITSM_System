@@ -2,136 +2,79 @@
 
 Another agent must be able to continue from this file alone. Do not rely on chat history.
 
-## 1. What the project does
+## 1. Project Overview
+Enterprise IT Service Management (ITSM) web application with intelligent rule-based ticket prioritization, automated technician assignment, SLA monitoring, and performance analytics.
 
-Enterprise IT Service Management (ITSM) web application: employees create support tickets; a **rule-based** (not ML) engine recommends priority; admins assign technicians using a workload/expertise recommender; SLA timers drive warnings and escalations; dashboards show analytics and recurring-incident hypotheses.
+- **Stack:** Python 3.14, Flask, SQLAlchemy 2.0 ORM, Flask-Migrate / Alembic, PostgreSQL (SQLite for local dev & testing), Jinja2 + Bootstrap 5 + Chart.js, Pytest.
+- **Architecture:** Modular monolith using application factory (`create_app`), Blueprints (`/api` and web), and dedicated service layer (`app/services`).
 
-Target audience: IBM Delivery Consultant internship demonstration of enterprise application development and deployment.
+## 2. Current Development Phase & Status
+- **Current State:** Modules 1, 2, and 3 are fully completed, integrated with both REST API and Web UI, and covered by automated tests.
+- **Overall Completion:** ~50%
+- **Automated Test Results:** **28 passing tests** (0 failures).
 
-## 2. Technologies used (planned)
+## 3. What Has Been Implemented and Verified
+1. **Module 1: Authentication & User Management:**
+   - Registration, login, logout, profile update.
+   - Password hashing with PBKDF2:SHA256.
+   - Dual authentication: Web session cookies (Flask-Login + CSRF) and REST API (Flask-JWT-Extended).
+   - Role-Based Access Control (`admin`, `technician`, `employee`).
+2. **Module 3: Intelligent Ticket Prioritization Engine:**
+   - Deterministic rule engine in `app/services/priority_engine.py`.
+   - Weighs business impact (0–40 pts), urgency (0–30 pts), affected users (0–20 pts), and category modifiers (e.g., Security +10, Database +8, Network +8).
+   - Generates human-readable justification reasons and assigns recommended priority (`Critical`, `High`, `Medium`, `Low`).
+   - Admin override supported with mandatory justification audit log.
+3. **Module 2: Ticket Management:**
+   - Service in `app/services/ticket_service.py`.
+   - Sequential ticket numbering format: `INC-YYYY-XXXXX`.
+   - SLA deadline automatically calculated from priority.
+   - Full lifecycle status transitions: `Open` -> `Assigned` -> `In Progress` -> `Pending` -> `Resolved` -> `Closed`.
+   - Employee reopening capability.
+   - Threaded comments (`TicketComment`) and chronological audit trail (`TicketHistory`).
+   - Web views (`/tickets`, `/tickets/new`, `/tickets/<id>`) and REST endpoints (`/api/tickets/*`).
+4. **Interactive UI:**
+   - Bootstrap 5 responsive shell (`app/templates/base.html`).
+   - Live interactive priority estimation on ticket creation page (`tickets/create.html`).
+   - Dashboard with ticket count metrics (`dashboards/home.html`).
 
-Python 3, Flask (blueprints, application factory), SQLAlchemy, Flask-Migrate/Alembic, PostgreSQL, Flask-Login + Flask-WTF CSRF (browser), Flask-JWT-Extended (REST), Jinja2 + Bootstrap 5 + Chart.js, Pytest, Docker Compose, Gunicorn for production.
+## 4. Key File Locations
+- Application Factory: `app/__init__.py`
+- Configuration: `app/config.py`
+- Enums & Constants: `app/constants.py`
+- Database Models: `app/models/` (`user.py`, `ticket.py`, `technician.py`, `sla.py`, `department.py`, `escalation.py`, `notification.py`)
+- Business Services: `app/services/`
+  - Priority Engine: `app/services/priority_engine.py`
+  - Ticket Service: `app/services/ticket_service.py`
+  - Default Seeder: `app/services/defaults.py`
+  - Auth Service: `app/services/auth_service.py`
+- REST APIs: `app/api/` (`auth.py`, `tickets.py`)
+- Web Views: `app/web/` (`auth.py`, `tickets.py`, `dashboards.py`, `forms.py`)
+- Templates: `app/templates/` (`base.html`, `tickets/`, `auth/`, `dashboards/`)
+- Tests: `tests/` (`test_auth.py`, `test_tickets.py`, `test_priority.py`, `test_health.py`, `test_security.py`)
 
-## 3. Current development phase
-
-**Phase 1 complete as planning artifacts only.** Waiting for **user approval** before writing application code.
-
-Overall completion: planning only (~8%).
-
-Last updated: 2026-11-02.
-
-## 4. What has been implemented
-
-Documentation only:
-
-- `README.md` — overview and future run instructions
-- `ARCHITECTURE.md` — layers, folder tree, ER design, engines, Docker/cloud, security
-- `TASKS.md` — checklist
-- `HANDOFF.md` — this file
-
-No Python package, no Docker files, no database, no tests yet.
-
-## 5. What is currently working
-
-Nothing runnable. Workspace had no prior source code.
-
-## 6. What remains incomplete
-
-Everything in Phases 2–7 of `TASKS.md`: Flask app, models, auth, tickets, engines, UI, Docker, tests, production config, API docs, screenshots.
-
-## 7. Known errors and bugs
-
-None in code. Open product decisions (already recorded in ARCHITECTURE.md):
-
-- Integer primary keys; human `ticket_number`.
-- SLA clock starts at ticket **creation** (`clock_start=created`).
-- Default resolution hours: Critical 2, High 6, Medium 24, Low 48.
-- Public registration creates **employee** only; admins create technicians/admins.
-- Hard delete of tickets discouraged; admin closes tickets. Exact DELETE API behavior: prefer 405 or close-only unless admin force-delete is required later.
-- Email notifications optional (`MAIL_ENABLED`); in-app first.
-- Scheduler: single replica with `ENABLE_SCHEDULER=true` + PostgreSQL advisory lock.
-- Web sessions for UI; JWT for `/api/*`.
-
-## 8. Important file locations
-
-```
-ARCHITECTURE.md     system design
-TASKS.md            checklist (mark [x] only after verified work)
-HANDOFF.md          this handoff
-README.md           user-facing overview
+## 5. How to Run Application and Tests
+### Run Tests:
+```powershell
+.\.venv\Scripts\pytest.exe -v
 ```
 
-Proposed code root after approval: `app/` as described in ARCHITECTURE.md.
-
-## 9. How to start the application
-
-Not applicable until Phase 2+. After implementation, expected commands (do not assume they exist yet):
-
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env   # then edit
-flask db upgrade
-flask run
+### Run Web Application:
+```powershell
+$env:FLASK_APP = "wsgi.py"
+$env:FLASK_CONFIG = "development"
+.\.venv\Scripts\flask.exe run --port 5000
 ```
 
-Docker (planned):
-
-```bash
-docker compose up --build
-```
-
-## 10. How to run tests
-
-Not applicable yet. Planned:
-
-```bash
-pip install -r requirements-dev.txt
-pytest
-```
-
-## 11. Database setup instructions
-
-Planned: PostgreSQL 16. `DATABASE_URL=postgresql+psycopg://user:pass@host:5432/itsm`.
-
-Migrations via Flask-Migrate. No schema exists until models + `flask db init/migrate/upgrade`.
-
-## 12. Docker commands
-
-Not created. See ARCHITECTURE.md section 10 for intended Compose layout (`web` + `db`, volume, healthcheck).
-
-## 13. Environment variables required (planned)
-
-Do not commit real values.
-
-| Variable | Purpose |
-| -------- | ------- |
-| SECRET_KEY | Flask sessions / CSRF |
-| JWT_SECRET_KEY | API tokens |
-| DATABASE_URL | SQLAlchemy URL |
-| FLASK_ENV / FLASK_CONFIG | development / production / testing |
-| ENABLE_SCHEDULER | true on one web replica only |
-| MAIL_ENABLED | false until email is implemented |
-
-## 14. The exact next task to implement
-
-**STOP if the user has not approved the architecture.**
-
-After explicit approval, implement **Phase 2 foundation only**:
-
-1. Create folder structure under `app/`.
-2. `requirements.txt` with pinned reasonable versions.
-3. `app/config.py`, `app/extensions.py`, `create_app`.
-4. SQLAlchemy models matching ARCHITECTURE.md.
-5. Flask-Migrate initial migration.
-6. `/health` endpoint.
-7. `.gitignore` and `.env.example`.
-8. Minimal Pytest proving the app factory and health endpoint.
-9. Update TASKS.md / HANDOFF.md with what was actually verified.
-
-Do **not** generate the entire application in one pass. Do **not** put logic in a single `app.py`. Preserve this architecture unless the user requests a change.
-
-## Continuation summary
-
-Inspect `ARCHITECTURE.md` and `TASKS.md` first. User instruction was: analyse, propose, document, **wait for approval**. Implementation has not started.
+## 6. Exact Next Development Task
+Proceed to **Module 4: Automated Technician Recommendation & Assignment Engine**:
+1. Implement `app/services/assignment_engine.py`:
+   - Match eligible technicians based on `TechnicianSkill.category == ticket.category`.
+   - Filter by `availability_status == 'available'`.
+   - Rank technicians by lowest active ticket workload (tickets in `Open`, `Assigned`, `In Progress`, `Pending`).
+   - Respect `max_concurrent_tickets` cap.
+   - Return recommended technician along with an explainable justification score and reason.
+2. Implement assignment APIs & web actions:
+   - `GET /api/technicians/recommendations?ticket_id=<id>`
+   - `POST /api/technicians/assign` (Admin assign or auto-assign with manual override).
+   - Display recommended technician and assignment controls on ticket detail page.
+3. Write Pytest tests in `tests/test_assignment.py` and verify all tests pass.

@@ -12,10 +12,11 @@ class TicketStatus:
     OPEN = "Open"
     ASSIGNED = "Assigned"
     IN_PROGRESS = "In Progress"
+    PENDING = "Pending"
     ON_HOLD = "On Hold"
     RESOLVED = "Resolved"
     CLOSED = "Closed"
-    ALL = (OPEN, ASSIGNED, IN_PROGRESS, ON_HOLD, RESOLVED, CLOSED)
+    ALL = (OPEN, ASSIGNED, IN_PROGRESS, PENDING, ON_HOLD, RESOLVED, CLOSED)
 
 
 class TicketCategory:
@@ -37,6 +38,14 @@ class Priority:
 
 
 class ImpactLevel:
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+    ALL = (LOW, MEDIUM, HIGH, CRITICAL)
+
+
+class UrgencyLevel:
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
