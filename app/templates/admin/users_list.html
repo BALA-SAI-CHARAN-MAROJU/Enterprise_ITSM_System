@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Employee Directory & Roles · Enterprise ITSM{% endblock %}
+{% block heading %}Corporate Employee Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="card-title fw-bold text-dark mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Enterprise Personnel & Role Assignments</h5>
+      <div class="text-muted small" style="font-size: 0.75rem;">Manage designated corporate departments, job titles, VIP executive status, and technician tiers</div>
+    </div>
+    <span class="badge bg-primary px-3 py-2 text-white">{{ users|length }} Total Accounts</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Designated Corporate Role</th>
+            <th>Department</th>
+            <th>System Role</th>
+            <th>VIP Status</th>
+            <th>Technician Profile</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2.5">
+                  <div class="avatar-chip" style="width: 36px; height: 36px; font-size: 0.85rem;">
+                    {{ u.first_name[0] if u.first_name else 'U' }}
+                  </div>
+                  <div>
+                    <strong class="text-dark d-block">{{ u.full_name }}</strong>
+                    <span class="text-muted small font-mono" style="font-size: 0.75rem;">{{ u.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="fw-semibold text-dark small d-block">{{ u.job_title or 'Employee' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-light text-secondary border fw-medium px-2 py-1" style="font-size: 0.78rem;">
+                  <i class="bi bi-building me-1 text-primary"></i>{{ u.department_name }}
+                </span>
+              </td>
+              <td>
+                {% if u.role == 'admin' %}
+                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle text-uppercase" style="font-size: 0.7rem;">Admin</span>
+                {% elif u.role == 'technician' %}
+                  <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-uppercase" style="font-size: 0.7rem;">Technician</span>
+                {% else %}
+                  <span class="badge bg-secondary bg-opacity-10 text-secondary border text-uppercase" style="font-size: 0.7rem;">Employee</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.is_vip %}
+                  <span class="badge bg-warning bg-opacity-15 text-dark border border-warning-subtle fw-bold" style="font-size: 0.72rem;">
+                    <i class="bi bi-star-fill text-warning me-1"></i>VIP Executive
+                  </span>
+                {% else %}
+                  <span class="text-muted small">Standard</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.technician_profile %}
+                  <div class="small">
+                    <span class="badge bg-dark font-mono me-1" style="font-size: 0.68rem;">Tier {{ u.technician_profile.tier }}</span>
+                    <span class="text-secondary small">{{ u.technician_profile.specialization }}</span>
+                    <div class="mt-1">
+                      {% for s in u.technician_profile.skills %}
+                        <span class="badge bg-light text-dark border me-0.5" style="font-size: 0.65rem;">{{ s.category }}</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-muted small fst-italic">-</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('web_admin.edit_user', user_id=u.id) }}" class="btn btn-sm btn-outline-primary px-3 py-1 shadow-sm">
+                  <i class="bi bi-pencil-square me-1"></i>Edit Role
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

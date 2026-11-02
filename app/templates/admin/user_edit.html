@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Edit Role & Assignments · Enterprise ITSM{% endblock %}
+{% block heading %}Designate Corporate Role{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <!-- User Overview Card -->
+    <div class="card border-0 shadow-sm text-center p-4 mb-4">
+      <div class="mx-auto mb-3">
+        <div class="avatar-chip mx-auto shadow" style="width: 68px; height: 68px; font-size: 1.7rem;">
+          {{ target_user.first_name[0] if target_user.first_name else 'U' }}
+        </div>
+      </div>
+      <h5 class="fw-bold text-dark mb-1">{{ target_user.full_name }}</h5>
+      <div class="text-muted small mb-2">{{ target_user.email }}</div>
+      <div>
+        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-uppercase px-3 py-1" style="font-size: 0.72rem;">
+          Current: {{ target_user.role }}
+        </span>
+      </div>
+      <hr class="my-3 border-light">
+      <div class="text-start small text-muted">
+        <div class="d-flex justify-content-between mb-2">
+          <span>Current Department</span>
+          <strong class="text-dark">{{ target_user.department_name }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>Designated Job Title</span>
+          <strong class="text-dark">{{ target_user.job_title or 'Employee' }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>VIP Escalation Status</span>
+          {% if target_user.is_vip %}
+            <span class="badge bg-warning bg-opacity-25 text-dark fw-bold">VIP Executive</span>
+          {% else %}
+            <span class="text-muted">Standard Employee</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-bottom border-light">
+        <h5 class="card-title fw-bold text-dark mb-0">
+          <i class="bi bi-person-badge-fill me-2 text-primary"></i>Role & Department Configuration
+        </h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          {{ form.hidden_tag() }}
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.first_name.label(class="form-label") }}
+              {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+              {% for error in form.first_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              {{ form.last_name.label(class="form-label") }}
+              {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+              {% for error in form.last_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.role.label(class="form-label") }}
+              {{ form.role(class="form-select", id="systemRoleSelect") }}
+              <div class="form-text text-muted">Defines access privileges across the system.</div>
+            </div>
+            <div class="col-md-6">
+              {{ form.department_id.label(class="form-label") }}
+              {{ form.department_id(class="form-select") }}
+              <div class="form-text text-muted">Links to corporate business unit (e.g. Executive, Finance).</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.job_title.label(class="form-label") }}
+            {{ form.job_title(class="form-control", placeholder="e.g. Chief Executive Officer, Senior Financial Analyst") }}
+            <div class="form-text text-muted">Official corporate title displayed in audit trails and ticket dispatch queues.</div>
+          </div>
+
+          <div class="row mb-4 g-3">
+            <div class="col-md-6">
+              <div class="p-3 bg-light rounded-3 border">
+                <div class="form-check form-switch">
+                  {{ form.is_vip(class="form-check-input", id="vipSwitch") }}
+                  {{ form.is_vip.label(class="form-check-label fw-bold text-dark", for="vipSwitch") }}
+                </div>
+                <div class="small text-muted mt-1" style="font-size: 0.78rem;">
+                  When enabled, tickets submitted by this employee are automatically prioritized (+15 pts) and jump to the top of technician work queues.
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 bg-light rounded-3 border">
+                <div class="form-check form-switch">
+                  {{ form.is_active(class="form-check-input", id="activeSwitch") }}
+                  {{ form.is_active.label(class="form-check-label fw-bold text-dark", for="activeSwitch") }}
+                </div>
+                <div class="small text-muted mt-1" style="font-size: 0.78rem;">
+                  Enable or disable this user account's ability to log in and create tickets.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technician-Specific Options Section -->
+          <div id="technicianSection" class="p-4 rounded-3 border border-primary-subtle bg-primary bg-opacity-10 mb-4">
+            <h6 class="fw-bold text-dark mb-2">
+              <i class="bi bi-tools me-2 text-primary"></i>Technician Problem-Solver Configuration
+            </h6>
+            <div class="small text-muted mb-3">Configure technical expertise and specialization tier to match incoming problem categories.</div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                {{ form.technician_tier.label(class="form-label") }}
+                {{ form.technician_tier(class="form-select") }}
+              </div>
+              <div class="col-md-6">
+                {{ form.technician_specialization.label(class="form-label") }}
+                {{ form.technician_specialization(class="form-control", placeholder="e.g. Security & Database Architecture") }}
+              </div>
+            </div>
+
+            <div class="mb-0">
+              {{ form.technician_skills.label(class="form-label") }}
+              {{ form.technician_skills(class="form-select", size=5) }}
+              <div class="form-text text-muted">Hold Ctrl / Cmd to select multiple problem domains. Incidents matching these domains will route to this technician.</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+            <a href="{{ url_for('web_admin.list_users') }}" class="btn btn-light border px-3">Back to Directory</a>
+            {{ form.submit(class="btn btn-primary px-4 shadow-sm") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleTechSection() {
+    const roleSelect = document.getElementById('systemRoleSelect');
+    const techSection = document.getElementById('technicianSection');
+    if (roleSelect && techSection) {
+      if (roleSelect.value === 'technician') {
+        techSection.style.display = 'block';
+      } else {
+        techSection.style.display = 'none';
+      }
+    }
+  }
+  document.getElementById('systemRoleSelect').addEventListener('change', toggleTechSection);
+  toggleTechSection();
+</script>
+{% endblock %}

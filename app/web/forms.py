@@ -1,8 +1,17 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms import (
+    BooleanField,
+    IntegerField,
+    PasswordField,
+    SelectField,
+    SelectMultipleField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange
 
-from app.constants import ImpactLevel, Priority, TicketCategory, TicketStatus, UrgencyLevel
+from app.constants import ImpactLevel, Priority, Role, TicketCategory, TicketStatus, UrgencyLevel
 
 
 class LoginForm(FlaskForm):
@@ -81,3 +90,34 @@ class TechnicianAssignForm(FlaskForm):
     technician_id = SelectField("Select Technician", coerce=int, validators=[DataRequired()])
     override_reason = StringField("Override Justification (if overriding recommendation)")
     submit = SubmitField("Confirm Assignment")
+
+
+class AdminUserEditForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired(), Length(max=80)])
+    last_name = StringField("Last Name", validators=[DataRequired(), Length(max=80)])
+    role = SelectField(
+        "System Role",
+        choices=[(Role.EMPLOYEE, "Employee"), (Role.TECHNICIAN, "Technician"), (Role.ADMIN, "Administrator")],
+        validators=[DataRequired()],
+    )
+    department_id = SelectField("Corporate Department", coerce=int)
+    job_title = StringField("Designated Job Title", validators=[Length(max=100)])
+    is_vip = BooleanField("VIP Executive Status (Priority Escalation)")
+    is_active = BooleanField("Account Active Status", default=True)
+    # Technician-specific configuration
+    technician_tier = SelectField(
+        "Technician Tier Level",
+        choices=[
+            (1, "Tier 1 - General Helpdesk & App Support"),
+            (2, "Tier 2 - Systems & Infrastructure Specialist"),
+            (3, "Tier 3 - Senior Architecture & Incident Commander"),
+        ],
+        coerce=int,
+        default=1,
+    )
+    technician_specialization = StringField("Specialization Focus", validators=[Length(max=100)])
+    technician_skills = SelectMultipleField(
+        "Certified Problem Categories",
+        choices=[(c, c) for c in TicketCategory.ALL],
+    )
+    submit = SubmitField("Save Role & Assignments")
