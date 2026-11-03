@@ -184,3 +184,5 @@ The application is structured for cloud deployment:
 - **Production WSGI:** Gunicorn is configured in `Dockerfile` and `wsgi.py`.
 - **Database Portability:** Uses SQLAlchemy with PostgreSQL (`psycopg` v3 driver) compatible with AWS RDS, IBM Cloud Databases for PostgreSQL, or containerized Docker Compose.
 - **Container Portability:** Compatible with AWS App Runner, AWS ECS, IBM Cloud Code Engine, or a standalone Linux VM.
+#   E n t e r p r i s e _ I T S M _ S y s t e m  
+ 
